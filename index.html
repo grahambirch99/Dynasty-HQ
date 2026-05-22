@@ -122,14 +122,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 </head>
 <body>
 <div class="toast" id="toast"></div>
-<div class="loading" id="loading">
-  <div class="spin"></div>
-  <p style="font-size:15px;font-weight:600">Dynasty HQ</p>
-  <p style="font-size:13px;color:var(--text2);margin-top:4px" id="lmsg">Connecting to Sleeper…</p>
-  <p style="font-size:11px;color:var(--text3);max-width:260px;text-align:center;line-height:1.6;margin-top:6px">Takes 3–5s on first open. If stuck, check your connection and reload.</p>
-  <button onclick="location.reload()" style="margin-top:12px;padding:8px 18px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#8891a4;font-size:12px;cursor:pointer">Reload</button>
-</div>
-<div class="app" id="app" style="display:none">
+<div class="app" id="app">
   <div class="topbar">
     <div style="flex:1;min-width:0"><h1 id="ltitle">Dynasty HQ</h1><p id="lsub">12-team · Superflex · PPR</p></div>
     <select class="sel" style="width:auto;max-width:130px;font-size:11px" id="tsel" onchange="setMyTeam(this.value)"></select>
@@ -219,7 +212,6 @@ function gradeOf(avg){
   return{g:"D",c:"vD"};
 }
 function showToast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
-function setMsg(m){ const e=document.getElementById("lmsg"); if(e) e.textContent=m; }
 
 // ═══════════════════════════════════════════════════════════
 // PPR CALC
@@ -470,78 +462,11 @@ function buildScoutReport(pid){
 // ═══════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════
-// ── CACHE HELPERS ─────────────────────────────────────────
-const CACHE_KEY = "dhq_" + LEAGUE_ID;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// ── CACHE ────────────────────────────────────────────────
+const CKEY = "dhq2_"+LEAGUE_ID;
+function saveCache(d){ try{ localStorage.setItem(CKEY,JSON.stringify({ts:Date.now(),...d})); }catch(_){} }
+function loadCache(){ try{ const r=JSON.parse(localStorage.getItem(CKEY)||"null"); return r&&(Date.now()-r.ts<300000)?r:null; }catch(_){return null;} }
 
-function saveCache(data){
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(),...data})); }catch(_){}
-}
-function loadCache(){
-  try{
-    const raw = localStorage.getItem(CACHE_KEY);
-    if(!raw) return null;
-    const d = JSON.parse(raw);
-    if(Date.now()-d.ts > CACHE_TTL) return null;
-    return d;
-  }catch(_){ return null; }
-}
-
-async function boot(){
-  // ── Step 1: Show cached data instantly if available ──
-  const cached = loadCache();
-  if(cached){
-    S.league=cached.league; S.rosters=cached.rosters; S.users=cached.users;
-    S.myRosterId=cached.rosters[0]?.roster_id;
-    applyLeagueToUI();
-    document.getElementById("loading").style.display="none";
-    document.getElementById("app").style.display="flex";
-    render();
-    setMsg("Refreshing data…");
-    // Refresh in background silently
-    refreshLeague();
-    loadFC();
-    setTimeout(()=>loadBackgroundData(), 500);
-    return;
-  }
-
-  // ── Step 2: No cache — fetch with hard 8s deadline ──
-  setMsg("Connecting to Sleeper…");
-
-  // Hard deadline: show app after 8s no matter what
-  const showAppTimer = setTimeout(()=>{
-    document.getElementById("loading").style.display="none";
-    document.getElementById("app").style.display="flex";
-    render();
-  }, 8000);
-
-  try{
-    const [lg,rs,uArr] = await Promise.all([
-      jfetch(`${SLP}/league/${LEAGUE_ID}`, 7000),
-      jfetch(`${SLP}/league/${LEAGUE_ID}/rosters`, 7000),
-      jfetch(`${SLP}/league/${LEAGUE_ID}/users`, 7000),
-    ]);
-    clearTimeout(showAppTimer);
-    S.league=lg; S.rosters=rs;
-    const uMap={}; uArr.forEach(u=>{ uMap[u.user_id]=u; }); S.users=uMap;
-    S.myRosterId=rs[0]?.roster_id;
-    saveCache({league:lg, rosters:rs, users:S.users});
-    applyLeagueToUI();
-  }catch(e){
-    clearTimeout(showAppTimer);
-    setMsg("⚠ "+e.message+" — tap to retry");
-    document.getElementById("lmsg").style.cursor="pointer";
-    document.getElementById("lmsg").onclick=()=>location.reload();
-  }
-
-  document.getElementById("loading").style.display="none";
-  document.getElementById("app").style.display="flex";
-  render();
-
-  if(!S.rosters.length) return;
-  loadFC();
-  setTimeout(()=>loadBackgroundData(), 400);
-}
 
 function applyLeagueToUI(){
   document.getElementById("ltitle").textContent=S.league?.name||"Dynasty HQ";
@@ -551,40 +476,62 @@ function applyLeagueToUI(){
   S.rosters.forEach(r=>{ const o=document.createElement("option"); o.value=r.roster_id; o.textContent=ownerName(r); sel.appendChild(o); });
 }
 
-async function refreshLeague(){
-  try{
-    const [lg,rs,uArr]=await Promise.all([
-      jfetch(`${SLP}/league/${LEAGUE_ID}`,8000),
-      jfetch(`${SLP}/league/${LEAGUE_ID}/rosters`,8000),
-      jfetch(`${SLP}/league/${LEAGUE_ID}/users`,8000),
-    ]);
+async function boot(){
+  // Show app instantly — no loading screen
+  render();
+
+  // Try cache first for instant data
+  const cached=loadCache();
+  if(cached){
+    S.league=cached.league; S.rosters=cached.rosters||[]; S.users=cached.users||{};
+    S.myRosterId=S.rosters[0]?.roster_id;
+    applyLeagueToUI();
+    render();
+  }
+
+  // Fetch league data (small, fast) — 6s timeout each
+  const safe = (p) => p.catch(()=>null);
+  const [lg,rs,uArr] = await Promise.all([
+    safe(jfetch(`${SLP}/league/${LEAGUE_ID}`,6000)),
+    safe(jfetch(`${SLP}/league/${LEAGUE_ID}/rosters`,6000)),
+    safe(jfetch(`${SLP}/league/${LEAGUE_ID}/users`,6000)),
+  ]);
+
+  if(lg&&rs&&uArr){
     S.league=lg; S.rosters=rs;
     const uMap={}; uArr.forEach(u=>{ uMap[u.user_id]=u; }); S.users=uMap;
+    S.myRosterId=rs[0]?.roster_id;
     saveCache({league:lg,rosters:rs,users:S.users});
-    computeLineupRanks(); render();
-  }catch(_){}
-}
+    applyLeagueToUI();
+    render();
+  } else if(!cached){
+    // Show error inline on the dash
+    document.getElementById("ltitle").textContent="Connection error";
+    document.getElementById("lsub").textContent="Tap here to retry";
+    document.getElementById("ltitle").parentElement.style.cursor="pointer";
+    document.getElementById("ltitle").parentElement.onclick=()=>location.reload();
+    return;
+  }
 
-function loadBackgroundData(){
-  // Players DB (~8MB) — longer timeout, no blocking
-  fetch(`${SLP}/players/nfl`)
-    .then(r=>r.ok?r.json():null)
-    .then(ps=>{ if(ps){ S.players=ps; render(); loadHistStats(); } })
-    .catch(()=>{});
+  // Background: FC values (fast, ~200KB)
+  loadFC();
 
-  // NFL state + projections
-  jfetch(`${SLP}/state/nfl`,10000)
-    .then(nfl=>{ S.nflState=nfl; loadCurrentProj(nfl); })
-    .catch(()=>{});
-
-  // Transactions + picks — lowest priority
+  // Background: players DB (~8MB) — don't await, fills in when ready
   setTimeout(()=>{
-    loadTxns();
-    jfetch(`${SLP}/league/${LEAGUE_ID}/traded_picks`,8000)
-      .then(d=>{ S.tradedPicks=d; render(); })
+    fetch(`${SLP}/players/nfl`)
+      .then(r=>r.ok?r.json():null)
+      .then(ps=>{ if(ps){ S.players=ps; render(); loadHistStats(); }})
       .catch(()=>{});
-  }, 2000);
+  }, 200);
+
+  // Background: projections + transactions (lowest priority)
+  setTimeout(()=>{
+    jfetch(`${SLP}/state/nfl`,10000).then(nfl=>{ S.nflState=nfl; loadCurrentProj(nfl); }).catch(()=>{});
+    loadTxns();
+    jfetch(`${SLP}/league/${LEAGUE_ID}/traded_picks`,8000).then(d=>{ S.tradedPicks=d; render(); }).catch(()=>{});
+  }, 1500);
 }
+
 
 async function loadFC(){
   try{
