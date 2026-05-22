@@ -124,8 +124,10 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 <div class="toast" id="toast"></div>
 <div class="loading" id="loading">
   <div class="spin"></div>
-  <p style="font-size:13px;color:var(--text2)">Loading Dynasty HQ…</p>
-  <p style="font-size:11px;color:var(--text3);margin-top:4px" id="lmsg">Connecting to Sleeper</p>
+  <p style="font-size:15px;font-weight:600">Dynasty HQ</p>
+  <p style="font-size:13px;color:var(--text2);margin-top:4px" id="lmsg">Connecting to Sleeper…</p>
+  <p style="font-size:11px;color:var(--text3);max-width:260px;text-align:center;line-height:1.6;margin-top:6px">Takes 3–5s on first open. If stuck, check your connection and reload.</p>
+  <button onclick="location.reload()" style="margin-top:12px;padding:8px 18px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#8891a4;font-size:12px;cursor:pointer">Reload</button>
 </div>
 <div class="app" id="app" style="display:none">
   <div class="topbar">
@@ -181,7 +183,14 @@ const S = {
 // ═══════════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════════
-const jfetch = url => fetch(url).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
+// Fetch with 10s timeout
+const jfetch = (url, ms=10000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), ms);
+  return fetch(url, {signal:controller.signal})
+    .then(r=>{ clearTimeout(timer); if(!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(e=>{ clearTimeout(timer); throw e; });
+};
 const esc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const posClass = p => { const u=(p||"").toUpperCase().replace(/\d/g,""); return ["QB","RB","WR","TE","K","DEF","DL","LB","DB","IDL","EDGE"].includes(u)?u:"K"; };
 const fcVal = pid => S.fcMap[pid]?.value||0;
@@ -462,38 +471,76 @@ function buildScoutReport(pid){
 // BOOT
 // ═══════════════════════════════════════════════════════════
 async function boot(){
+  setMsg("Connecting to Sleeper…");
+
+  // Helper: retry a fetch up to N times
+  async function tryFetch(url, retries=2){
+    for(let i=0;i<=retries;i++){
+      try{ return await jfetch(url); }
+      catch(e){ if(i===retries) throw e; await new Promise(r=>setTimeout(r,1500)); }
+    }
+  }
+
+  // Show the app shell immediately with a loading state
+  // Then load each piece independently — nothing blocks the UI
+  let leagueOk=false;
+
+  // Try league + rosters + users — these are small and fast
   try{
     setMsg("Loading league…");
-    const [lg,rs,uArr]=await Promise.all([
-      jfetch(`${SLP}/league/${LEAGUE_ID}`),
-      jfetch(`${SLP}/league/${LEAGUE_ID}/rosters`),
-      jfetch(`${SLP}/league/${LEAGUE_ID}/users`),
+    const [lg,rs,uArr] = await Promise.all([
+      tryFetch(`${SLP}/league/${LEAGUE_ID}`),
+      tryFetch(`${SLP}/league/${LEAGUE_ID}/rosters`),
+      tryFetch(`${SLP}/league/${LEAGUE_ID}/users`),
     ]);
     S.league=lg; S.rosters=rs;
     const uMap={}; uArr.forEach(u=>{ uMap[u.user_id]=u; }); S.users=uMap;
     S.myRosterId=rs[0]?.roster_id;
+    leagueOk=true;
 
     document.getElementById("ltitle").textContent=lg.name||"Dynasty HQ";
     document.getElementById("lsub").textContent=`12-team · Superflex · PPR`;
     const sel=document.getElementById("tsel");
     rs.forEach(r=>{ const o=document.createElement("option"); o.value=r.roster_id; o.textContent=ownerName(r); sel.appendChild(o); });
-
-    document.getElementById("loading").style.display="none";
-    document.getElementById("app").style.display="flex";
-    render();
-
-    // Background loads
-    jfetch(`${SLP}/players/nfl`).then(ps=>{ S.players=ps; render(); loadHistStats(); }).catch(e=>console.warn("Players",e));
-    jfetch(`${SLP}/state/nfl`).then(nfl=>{ S.nflState=nfl; loadCurrentProj(nfl); }).catch(()=>{});
-    loadFC();
-    setTimeout(()=>{
-      loadTxns();
-      jfetch(`${SLP}/league/${LEAGUE_ID}/traded_picks`).then(d=>{ S.tradedPicks=d; render(); }).catch(()=>{});
-    },2500);
   }catch(e){
-    setMsg("Failed: "+e.message);
-    document.querySelector(".spin").style.display="none";
+    // Even if league load fails, show the app with an error state
+    setMsg("⚠ Could not load league: "+e.message+". Tap to retry.");
+    document.getElementById("lmsg").onclick=()=>{ location.reload(); };
   }
+
+  // Show app regardless
+  document.getElementById("loading").style.display="none";
+  document.getElementById("app").style.display="flex";
+  render();
+
+  if(!leagueOk) return;
+
+  // All remaining loads are fully independent — failures don't affect each other
+  // FC values: fast, high priority
+  loadFC();
+
+  // Players DB: large (~8MB), load with longer timeout, no retry on mobile
+  setTimeout(()=>{
+    fetch(`${SLP}/players/nfl`)
+      .then(r=>r.ok?r.json():null)
+      .then(ps=>{ if(ps){ S.players=ps; render(); loadHistStats(); } })
+      .catch(e=>console.warn("Players DB failed (will retry):",e));
+  }, 300);
+
+  // NFL state + projections: medium priority
+  setTimeout(()=>{
+    jfetch(`${SLP}/state/nfl`,15000)
+      .then(nfl=>{ S.nflState=nfl; loadCurrentProj(nfl); })
+      .catch(()=>{});
+  }, 500);
+
+  // Transactions + picks: low priority, delay so they don't compete
+  setTimeout(()=>{
+    loadTxns();
+    jfetch(`${SLP}/league/${LEAGUE_ID}/traded_picks`,8000)
+      .then(d=>{ S.tradedPicks=d; render(); })
+      .catch(()=>{});
+  }, 3000);
 }
 
 async function loadFC(){
@@ -515,26 +562,36 @@ async function loadCurrentProj(nfl){
   }catch(e){ console.warn("Proj",e); }
 }
 
-// Load historical season stats for all rostered players
+// Load historical season stats — my roster first, then others
 async function loadHistStats(){
-  const allPids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
-  // Batch: fetch each season for all players in parallel (but stagger to be mobile-friendly)
+  const myR = rosterById(S.myRosterId)||S.rosters[0];
+  const myPids = myR?.players||[];
+  const otherPids = [...new Set(S.rosters.flatMap(r=>r.roster_id!==S.myRosterId?r.players||[]:[])) ];
+  // Load my players first, then everyone else
+  const ordered = [...myPids, ...otherPids.filter(p=>!myPids.includes(p))];
+
   for(const season of HIST_SEASONS){
-    // Fetch in chunks of 10 to avoid overwhelming mobile connections
-    for(let i=0;i<allPids.length;i+=10){
-      const chunk=allPids.slice(i,i+10);
+    // Small chunks of 5 to be gentle on mobile connections
+    for(let i=0;i<ordered.length;i+=5){
+      const chunk=ordered.slice(i,i+5);
       await Promise.all(chunk.map(async pid=>{
         try{
-          const data=await fetch(`${SLP2}/stats/nfl/player/${pid}?season_type=regular&season=${season}&grouping=season`).then(r=>r.ok?r.json():null);
+          const ctrl=new AbortController();
+          const t=setTimeout(()=>ctrl.abort(),5000);
+          const r=await fetch(`${SLP2}/stats/nfl/player/${pid}?season_type=regular&season=${season}&grouping=season`,{signal:ctrl.signal});
+          clearTimeout(t);
+          const data=r.ok?await r.json():null;
           if(data&&data.stats){
             if(!S.histStats[pid]) S.histStats[pid]={};
             S.histStats[pid][season]=data.stats;
           }
         }catch(_){}
       }));
+      // Small delay between chunks to avoid saturating mobile connection
+      if(i%20===0&&i>0) await new Promise(r=>setTimeout(r,200));
     }
     S.statsLoaded=true;
-    render(); // update after each season loads
+    render();
   }
 }
 
