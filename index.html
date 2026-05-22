@@ -516,13 +516,9 @@ async function boot(){
   // Background: FC values (fast, ~200KB)
   loadFC();
 
-  // Background: players DB (~8MB) — don't await, fills in when ready
-  setTimeout(()=>{
-    fetch(`${SLP}/players/nfl`)
-      .then(r=>r.ok?r.json():null)
-      .then(ps=>{ if(ps){ S.players=ps; render(); loadHistStats(); }})
-      .catch(()=>{});
-  }, 200);
+  // Background: fetch ONLY rostered player details (Option 4)
+  // Instead of 8MB full DB, fetch only the ~200 players actually on rosters
+  setTimeout(()=>loadRosteredPlayers(), 200);
 
   // Background: projections + transactions (lowest priority)
   setTimeout(()=>{
@@ -550,6 +546,205 @@ async function loadCurrentProj(nfl){
     const proj=await fetch(`${SLP2}/projections/nfl/2024/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE`).then(r=>r.ok?r.json():{});
     S.proj=proj||{}; render();
   }catch(e){ console.warn("Proj",e); }
+}
+
+// ── OPTION 1: Bundled slim player lookup (name/pos/team/age/espn_id) ──────
+// This covers the ~500 most common dynasty players so rosters render instantly
+// Generated from Sleeper data — update periodically
+const PLAYER_BUNDLE = {
+  "4034":"Patrick Mahomes|QB|KC|29",
+  "4866":"Josh Allen|QB|BUF|28",
+  "4040":"Lamar Jackson|QB|BAL|27",
+  "6770":"Justin Herbert|QB|LAC|26",
+  "6786":"Ja'Marr Chase|WR|CIN|24",
+  "6804":"Tua Tagovailoa|QB|MIA|26",
+  "7547":"Trevor Lawrence|QB|JAC|25",
+  "8137":"Jalen Hurts|QB|PHI|26",
+  "5849":"Kyler Murray|QB|ARI|27",
+  "6801":"Justin Fields|QB|PIT|25",
+  "4039":"Dak Prescott|QB|DAL|31",
+  "3163":"Kirk Cousins|QB|ATL|36",
+  "5536":"Baker Mayfield|QB|TB|29",
+  "6797":"Jordan Love|QB|GB|26",
+  "3054":"Aaron Rodgers|QB|NYJ|41",
+  "7072":"Anthony Richardson|QB|IND|22",
+  "10859":"Caleb Williams|QB|CHI|23",
+  "10862":"Jayden Daniels|QB|WAS|23",
+  "10858":"Drake Maye|QB|NE|22",
+  "9509":"Bryce Young|QB|CAR|22",
+  "9226":"C.J. Stroud|QB|HOU|23",
+  "9955":"Will Levis|QB|TEN|25",
+  "7076":"Brock Purdy|QB|SF|24",
+  "4029":"Derek Carr|QB|NO|33",
+  "4017":"Russell Wilson|QB|PIT|36",
+  "3321":"Matthew Stafford|QB|LAR|36",
+  "6803":"Trey Lance|QB|DAL|24",
+  "7571":"Mac Jones|QB|NE|26",
+  "3198":"Geno Smith|QB|SEA|34",
+  "4149":"Deshaun Watson|QB|CLE|29",
+  "6023":"Gardner Minshew|QB|LV|28",
+  "3859":"Jacoby Brissett|QB|WAS|31",
+  "4035":"Alvin Kamara|RB|NO|29",
+  "6783":"Jake Ferguson|TE|DAL|25",
+  "7543":"Najee Harris|RB|PIT|26",
+  "5012":"Derrick Henry|RB|BAL|30",
+  "6806":"Travis Etienne|RB|JAC|25",
+  "6813":"Javonte Williams|RB|DEN|24",
+  "7553":"Breece Hall|RB|NYJ|23",
+  "7569":"Kenneth Walker|RB|SEA|24",
+  "7572":"Rachaad White|RB|TB|25",
+  "7574":"Brian Robinson|RB|WAS|25",
+  "8112":"Bijan Robinson|RB|ATL|23",
+  "8120":"Jahmyr Gibbs|RB|DET|22",
+  "8132":"De'Von Achane|RB|MIA|23",
+  "8136":"Zach Charbonnet|RB|SEA|23",
+  "10226":"Ashton Jeanty|RB|LV|21",
+  "10229":"Omarion Hampton|RB|LAC|21",
+  "10232":"TreVeyon Henderson|RB|NE|22",
+  "10235":"Quinshon Judkins|RB|CLE|21",
+  "4084":"Aaron Jones|RB|MIN|30",
+  "4068":"Nick Chubb|RB|CLE|29",
+  "5247":"Josh Jacobs|RB|GB|26",
+  "5892":"James Conner|RB|ARI|29",
+  "6126":"David Montgomery|RB|DET|27",
+  "6928":"D'Andre Swift|RB|CHI|26",
+  "7060":"Rhamondre Stevenson|RB|NE|25",
+  "7552":"Isaiah Pacheco|RB|KC|25",
+  "6794":"James Cook|RB|BUF|24",
+  "6145":"Tony Pollard|RB|TEN|27",
+  "6160":"Deebo Samuel|WR|SF|28",
+  "7234":"Khalil Herbert|RB|CHI|26",
+  "7240":"Kyren Williams|RB|LAR|24",
+  "6614":"Miles Sanders|RB|CAR|27",
+  "7556":"Zamir White|RB|LV|24",
+  "6130":"Cam Akers|RB|MIN|25",
+  "7561":"Dameon Pierce|RB|HOU|24",
+  "4046":"Kareem Hunt|RB|KC|29",
+  "8134":"Roschon Johnson|RB|CHI|23",
+  "9491":"Jonathon Brooks|RB|CAR|21",
+  "6820":"Elijah Mitchell|RB|SF|26",
+  "7066":"Damien Harris|RB|BUF|27",
+  "6958":"Raheem Mostert|RB|MIA|32",
+  "7049":"Rex Burkhead|RB|HOU|33",
+  "6790":"CeeDee Lamb|WR|DAL|25",
+  "6795":"Justin Jefferson|WR|MIN|25",
+  "4685":"Davante Adams|WR|LV|31",
+  "5938":"DK Metcalf|WR|SEA|26",
+  "5954":"Terry McLaurin|WR|WAS|28",
+  "6309":"Cooper Kupp|WR|LAR|31",
+  "6320":"Jelani Woods|TE|IND|25",
+  "6323":"Jaylen Waddle|WR|MIA|25",
+  "6325":"DeVonta Smith|WR|PHI|26",
+  "6328":"Amon-Ra St. Brown|WR|DET|24",
+  "6332":"Brandon Aiyuk|WR|SF|26",
+  "6800":"George Pickens|WR|PIT|23",
+  "6809":"Jahan Dotson|WR|PHI|24",
+  "6815":"Khalil Shakir|WR|BUF|25",
+  "6821":"Romeo Doubs|WR|GB|24",
+  "7563":"Tee Higgins|WR|CIN|25",
+  "7564":"Garrett Wilson|WR|NYJ|24",
+  "7568":"Drake London|WR|ATL|23",
+  "7570":"Jameson Williams|WR|DET|23",
+  "7573":"Chris Olave|WR|NO|24",
+  "8111":"Quentin Johnston|WR|LAC|23",
+  "8113":"Jordan Addison|WR|MIN|22",
+  "8114":"Zay Flowers|WR|BAL|23",
+  "8116":"Rashee Rice|WR|KC|24",
+  "8118":"Puka Nacua|WR|LAR|23",
+  "8121":"Jayden Reed|WR|GB|24",
+  "9228":"Malik Nabers|WR|NYG|21",
+  "9229":"Brian Thomas Jr|WR|JAC|22",
+  "9231":"Rome Odunze|WR|CHI|22",
+  "9232":"Xavier Worthy|WR|KC|21",
+  "10860":"Tetairoa McMillan|WR|CAR|21",
+  "10863":"Emeka Egbuka|WR|TB|22",
+  "8126":"Jaxon Smith-Njigba|WR|SEA|22",
+  "4881":"Mike Evans|WR|TB|30",
+  "6003":"Tyler Lockett|WR|SEA|31",
+  "6006":"Courtland Sutton|WR|DEN|29",
+  "3164":"Keenan Allen|WR|CHI|32",
+  "7560":"Dontayvion Wicks|WR|GB|23",
+  "6350":"Elijah Moore|WR|CLE|24",
+  "8123":"Marvin Harrison Jr|WR|ARI|22",
+  "10861":"Luther Burden III|WR|CHI|21",
+  "6340":"Diontae Johnson|WR|CAR|27",
+  "5104":"Adam Thielen|WR|CAR|33",
+  "4137":"Odell Beckham Jr|WR|FA|31",
+  "6346":"Kadarius Toney|WR|KC|25",
+  "6817":"Skyy Moore|WR|KC|24",
+  "5844":"Travis Kelce|TE|KC|35",
+  "5001":"George Kittle|TE|SF|30",
+  "6111":"Mark Andrews|TE|BAL|29",
+  "4148":"Kyle Pitts|TE|ATL|23",
+  "5003":"T.J. Hockenson|TE|MIN|26",
+  "5006":"David Njoku|TE|CLE|28",
+  "5010":"Dallas Goedert|TE|PHI|29",
+  "5016":"Evan Engram|TE|JAC|29",
+  "6048":"Cole Kmet|TE|CHI|25",
+  "6270":"Pat Freiermuth|TE|PIT|25",
+  "6780":"Isaiah Likely|TE|BAL|24",
+  "7558":"Trey McBride|TE|ARI|25",
+  "8130":"Tucker Kraft|TE|GB|23",
+  "8133":"Darnell Washington|TE|PIT|23",
+  "9493":"Brock Bowers|TE|LV|22",
+  "9500":"Ben Sinnott|TE|WAS|23",
+  "7546":"Sam LaPorta|TE|DET|23",
+  "7788":"Dalton Kincaid|TE|BUF|24",
+  "7791":"Michael Mayer|TE|LV|23",
+  "7792":"Luke Musgrave|TE|GB|24",
+  "4199":"Zach Ertz|TE|ARI|33",
+  "5018":"Noah Fant|TE|SEA|27"
+};
+
+// Build a proper player object from bundle string
+function bundleToPlayer(pid, str){
+  if(!str) return null;
+  const [full_name,position,team,age]=str.split("|");
+  return {player_id:pid,full_name,position,team,age:parseInt(age),fantasy_positions:[position]};
+}
+
+// ── OPTION 4: Fetch only rostered players individually ────────────────
+async function loadRosteredPlayers(){
+  // Get all unique player IDs across all rosters
+  const allPids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
+
+  // Step 1: Apply bundle data instantly for known players
+  let missing=[];
+  allPids.forEach(pid=>{
+    if(S.players[pid]) return; // already have it
+    if(PLAYER_BUNDLE[pid]){
+      const parts=PLAYER_BUNDLE[pid].split("|");
+      S.players[pid]={player_id:pid,full_name:parts[0],position:parts[1],team:parts[2],age:parseInt(parts[3]),fantasy_positions:[parts[1]]};
+    } else {
+      missing.push(pid);
+    }
+  });
+
+  // Render immediately with bundle data — rosters are now visible
+  render();
+
+  // Step 2: Fetch missing players individually in small batches
+  if(missing.length>0){
+    for(let i=0;i<missing.length;i+=8){
+      const chunk=missing.slice(i,i+8);
+      await Promise.all(chunk.map(async pid=>{
+        try{
+          const ctrl=new AbortController();
+          const t=setTimeout(()=>ctrl.abort(),5000);
+          const r=await fetch(`${SLP}/players/nfl/${pid}`,{signal:ctrl.signal});
+          clearTimeout(t);
+          if(r.ok){
+            const p=await r.json();
+            if(p) S.players[pid]=p;
+          }
+        }catch(_){}
+      }));
+    }
+    render();
+  }
+
+  // Step 3: Now load historical stats with all player data ready
+  loadHistStats();
 }
 
 // Load historical season stats — my roster first, then others
@@ -938,30 +1133,43 @@ function renderPlayerDetail(pid){
   const ownerR=S.rosters.find(r=>(r.players||[]).includes(pid));
   const news=S.newsCache[pid];
   const scout=S.fcLoaded?buildScoutReport(pid):null;
-  const ppr22=seasonPPR(pid,"2022"), ppr23=seasonPPR(pid,"2023"), ppr24=seasonPPR(pid,"2024");
+  const ppr22=seasonPPR(pid,"2022"),ppr23=seasonPPR(pid,"2023"),ppr24=seasonPPR(pid,"2024");
   const rawStats=S.histStats[pid];
-
   if(news===undefined&&!window[`_nl_${pid}`]){ window[`_nl_${pid}`]=true; fetchPlayerNews(pid).then(()=>render()); }
-
-  // Key stats for display
-  const s24=rawStats?.["2024"]||{}, s23=rawStats?.["2023"]||{}, s22=rawStats?.["2022"]||{};
+  const s24=rawStats?.["2024"]||{},s23=rawStats?.["2023"]||{},s22=rawStats?.["2022"]||{};
   const pos=(p.position||"").toUpperCase();
   const statKeys=pos==="QB"?[["pass_yd","Pass Yd"],["pass_td","TD"],["pass_int","INT"],["rush_yd","Rush Yd"]]:
                  pos==="RB"?[["rush_yd","Rush Yd"],["rush_td","Rush TD"],["rec","Rec"],["rec_yd","Rec Yd"]]:
                             [["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","TD"],["rush_yd","Rush Yd"]];
-
   function statRow(s,yr){
     if(!s||!Object.keys(s).length) return "";
-    const cells=statKeys.filter(([k])=>parseFloat(s[k]||0)>0).map(([k,l])=>`<div class="stat-cell"><div class="stat-label">${l}</div><div class="stat-val" style="font-size:13px">${parseFloat(s[k]).toFixed(k.includes("td")||k==="rec"?0:0)}</div></div>`).join("");
+    const cells=statKeys.filter(([k])=>parseFloat(s[k]||0)>0).map(([k,l])=>`<div class="stat-cell"><div class="stat-label">${l}</div><div class="stat-val" style="font-size:13px">${parseFloat(s[k]).toFixed(0)}</div></div>`).join("");
     if(!cells) return "";
-    return `<div style="margin-bottom:6px"><div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${yr} Season</div><div class="stat-grid">${cells}<div class="stat-cell"><div class="stat-label">Fant Pts</div><div class="stat-val" style="font-size:13px;color:var(--green)">${calcPPR(s).toFixed(0)}</div></div></div></div>`;
-  }="font-size:18px;color:var(--green)">${ppr24.toFixed(0)}</div></div>`:""}
+    return `<div style="margin-bottom:6px"><div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${yr}</div><div class="stat-grid">${cells}<div class="stat-cell"><div class="stat-label">Fant Pts</div><div class="stat-val" style="font-size:13px;color:var(--green)">${calcPPR(s).toFixed(0)}</div></div></div></div>`;
+  }
+  return `
+  <button class="btn btn-sm" onclick="window._ssel=null;render()" style="margin-bottom:11px">← Back</button>
+  <div class="card">
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        <span class="pos ${posClass(p.position||"")}" style="font-size:11px;padding:3px 7px">${p.position||"?"}</span>
+        <h2 style="font-size:19px;font-weight:600;letter-spacing:-.02em">${esc(p.full_name||pid)}</h2>
+      </div>
+      <div style="font-size:12px;color:var(--text2)">${p.team||"FA"} · Age ${age||"?"} · ${p.years_exp!=null?`${p.years_exp}yr exp`:"Rookie"}</div>
+      ${ownerR?`<div style="font-size:11px;color:var(--text3);margin-top:2px">Owned by ${esc(ownerName(ownerR))}</div>`:`<div style="font-size:11px;color:var(--green);margin-top:2px">✓ Free agent</div>`}
+    </div>
+    <div class="grid2" style="margin-bottom:10px">
+      ${fc?`
+        <div class="metric"><div class="mlabel">FC Value (SF)</div><div class="mval" style="font-size:18px">${fc.value.toLocaleString()}</div></div>
+        <div class="metric"><div class="mlabel">Overall Rank</div><div class="mval" style="font-size:18px">#${fc.rank}</div><div class="msub">Pos: #${fc.posRank} &nbsp;${trendBadge(fc.trend30)}</div></div>
+      `:`<div class="metric" style="grid-column:span 2"><div class="mlabel">Dynasty Value</div><div class="mval" style="font-size:13px;color:var(--text3)">${S.fcLoaded?"Not ranked":"Loading…"}</div></div>`}
+      ${ppr24!==null?`<div class="metric"><div class="mlabel">2024 Fant Pts</div><div class="mval" style="font-size:18px;color:var(--green)">${ppr24.toFixed(0)}</div></div>`:""}
       ${ppr23!==null?`<div class="metric"><div class="mlabel">2023 Fant Pts</div><div class="mval" style="font-size:16px">${ppr23.toFixed(0)}</div></div>`:""}
       ${ppr22!==null?`<div class="metric"><div class="mlabel">2022 Fant Pts</div><div class="mval" style="font-size:16px">${ppr22.toFixed(0)}</div></div>`:""}
+      ${p.height?`<div class="metric"><div class="mlabel">Height</div><div class="mval" style="font-size:16px">${Math.floor(p.height/12)}'${p.height%12}"</div></div>`:""}
     </div>
-    ${statRow(s24,"2024")}${statRow(s23,"2023")}${statRow(s22,"2022")}
+    ${statRow(s24,"2024 Season")}${statRow(s23,"2023 Season")}${statRow(s22,"2022 Season")}
   </div>
-
   ${scout?`
   <div class="card">
     <div class="ctitle">Dynasty Scouting Report</div>
@@ -969,8 +1177,7 @@ function renderPlayerDetail(pid){
     <div class="scout-section"><div class="scout-title" style="color:var(--accent)">Production & Value</div><div class="scout-text">${scout.s1}</div></div>
     <div class="scout-section"><div class="scout-title" style="color:var(--amber)">Age Curve</div><div class="scout-text">${scout.s2}</div></div>
     <div class="scout-section"><div class="scout-title" style="color:var(--green)">Dynasty Verdict</div><div class="scout-text">${scout.s3}</div></div>
-  </div>`:`<div class="card"><div class="ctitle">Dynasty Scouting Report</div><div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)"><div class="spin spin-sm"></div>Loading FantasyCalc values…</div></div>`}
-
+  </div>`:`<div class="card"><div class="ctitle">Dynasty Scouting Report</div><div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)"><div class="spin spin-sm"></div>Loading…</div></div>`}
   <div class="card">
     <div class="ctitle">Latest News · ESPN</div>
     ${news===undefined||news===null?`<div style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px;padding:4px 0"><div class="spin spin-sm"></div>Loading…</div>`:
@@ -979,9 +1186,6 @@ function renderPlayerDetail(pid){
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════════
-// PLAYER ROW
-// ═══════════════════════════════════════════════════════════
 function prow(p,opts={}){
   const {showVal=false,showRank=false,showProd=false,prodYear="2024",showTrend=false,clickable=false}=opts;
   const pos=p.position||p.fantasy_positions?.[0]||"";
@@ -989,7 +1193,7 @@ function prow(p,opts={}){
   const fc=S.fcMap[p.player_id];
   const age=p.age||(p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null);
   const prod=showProd?seasonPPR(p.player_id,prodYear):null;
-  return `<div class="prow"${clickable?` style="cursor:pointer" onclick="window._ssel='${p.player_id}';go('search')"`:""}">
+  return `<div class="prow"${clickable?` style="cursor:pointer" onclick="window._ssel='${p.player_id}';go('search')"`:""}>
     <span class="pos ${posClass(pos)}" style="min-width:26px;text-align:center">${pos||"?"}</span>
     <span class="pname">${esc(p.full_name||p.player_id)}</span>
     ${age?`<span class="pmeta">${age}y</span>`:""}
