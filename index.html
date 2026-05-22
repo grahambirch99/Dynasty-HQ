@@ -566,33 +566,94 @@ async function loadCurrentProj(nfl){
 // No pre-bundle — all data comes from Sleeper /players/nfl/{pid}
 
 
-// ── Fetch only rostered players individually (no bulk 8MB endpoint) ──
-async function loadRosteredPlayers(){
-  const allPids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
-  // Prioritise my roster players first
-  const myPids=(rosterById(S.myRosterId)||S.rosters[0])?.players||[];
-  const rest=allPids.filter(p=>!myPids.includes(p));
-  const ordered=[...myPids,...rest];
-
-  // Fetch in batches of 10 — each request is tiny (~1KB per player)
-  for(let i=0;i<ordered.length;i+=10){
-    const chunk=ordered.slice(i,i+10);
-    await Promise.all(chunk.map(async pid=>{
-      if(S.players[pid]?.full_name) return; // already loaded
-      try{
-        const ctrl=new AbortController();
-        const t=setTimeout(()=>ctrl.abort(),6000);
-        const r=await fetch(`${SLP}/players/nfl/${pid}`,{signal:ctrl.signal});
-        clearTimeout(t);
-        if(r.ok){ const p=await r.json(); if(p&&p.full_name) S.players[pid]=p; }
-      }catch(_){}
-    }));
-    // Re-render after each batch so names appear progressively
-    if(i===0||i%30===0) render();
-  }
+// ── Load all NFL players — localStorage cache for instant repeat loads ──
+function clearPlayersCache(){
+  try{ localStorage.removeItem(PLAYERS_CACHE_KEY); }catch(_){}
+  S.players={};
   render();
-  // Now load career stats
-  loadHistStats();
+  fetchAndCachePlayers(true);
+}
+
+const PLAYERS_CACHE_KEY = "dhq_players_v1";
+const PLAYERS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+async function loadRosteredPlayers(){
+  // Step 1: Try localStorage cache first
+  try{
+    const raw = localStorage.getItem(PLAYERS_CACHE_KEY);
+    if(raw){
+      const cached = JSON.parse(raw);
+      if(Date.now() - cached.ts < PLAYERS_CACHE_TTL && cached.data){
+        S.players = cached.data;
+        render();
+        loadHistStats();
+        // Refresh cache in background if older than 12 hours
+        if(Date.now() - cached.ts > 12*60*60*1000) fetchAndCachePlayers(false);
+        return;
+      }
+    }
+  }catch(_){}
+
+  // Step 2: No cache — fetch the full players DB
+  await fetchAndCachePlayers(true);
+}
+
+async function fetchAndCachePlayers(renderAfter){
+  try{
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 30000); // 30s timeout
+    const r = await fetch(`${SLP}/players/nfl`, {signal:ctrl.signal});
+    clearTimeout(timer);
+    if(!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    S.players = data;
+
+    // Try to save to localStorage (may fail if storage full)
+    try{
+      // Only store the fields we actually need to keep it lean
+      const slim = {};
+      Object.entries(data).forEach(([pid,p])=>{
+        if(!p.full_name) return;
+        slim[pid] = {
+          player_id:pid,
+          full_name:p.full_name,
+          position:p.position,
+          fantasy_positions:p.fantasy_positions,
+          team:p.team,
+          age:p.age,
+          birth_date:p.birth_date,
+          years_exp:p.years_exp,
+          height:p.height,
+          weight:p.weight,
+          college:p.college,
+          espn_id:p.espn_id,
+          stats_id:p.stats_id,
+        };
+      });
+      localStorage.setItem(PLAYERS_CACHE_KEY, JSON.stringify({ts:Date.now(), data:slim}));
+    }catch(storageErr){
+      // Storage full or unavailable — still works, just won't cache
+      console.warn("Players cache storage failed:", storageErr.message);
+    }
+
+    if(renderAfter) render();
+    loadHistStats();
+  }catch(e){
+    console.warn("Players fetch failed:", e.message);
+    // Fallback: fetch just rostered players individually
+    const pids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
+    for(let i=0;i<pids.length;i+=8){
+      await Promise.all(pids.slice(i,i+8).map(async pid=>{
+        try{
+          const r=await fetch(`${SLP}/players/nfl/${pid}`,{signal:AbortSignal.timeout(5000)});
+          if(r.ok){ const p=await r.json(); if(p?.full_name) S.players[pid]=p; }
+        }catch(_){}
+      }));
+      if(i===0) render();
+    }
+    render();
+    loadHistStats();
+  }
 }
 
 // Load career stats for all rostered players
@@ -684,10 +745,11 @@ function renderDash(){
   const topAssets=[...myPl].sort((a,b)=>fcVal(b.player_id)-fcVal(a.player_id)).slice(0,10);
   const analysis=S.fcLoaded?buildTeamAnalysis(myR):null;
   const fcStatus=S.fcLoaded?`<span class="dot ok"></span>FC values`:`<span class="dot pend"></span>Loading values…`;
-  const statStatus=S.statsLoaded?`<span class="dot ok"></span>Season stats loaded`:`<span class="dot pend"></span>Loading stats…`;
+  const statStatus=S.statsLoaded?`<span class="dot ok"></span>Season stats`:`<span class="dot pend"></span>Loading stats…`;
+  const playerStatus=Object.keys(S.players).length>100?`<span class="dot ok"></span>${Object.keys(S.players).length.toLocaleString()} players`:`<span class="dot pend"></span>Loading players…`;
 
   return `
-  <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-bottom:11px;flex-wrap:wrap">${fcStatus}&nbsp;&nbsp;${statStatus}</div>
+  <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-bottom:11px;flex-wrap:wrap;align-items:center">${fcStatus}&nbsp;&nbsp;${statStatus}&nbsp;&nbsp;${playerStatus}<button onclick="clearPlayersCache()" style="margin-left:auto;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer">↺ Refresh</button></div>
   <div class="grid2">
     <div class="metric"><div class="mlabel">Record</div><div class="mval">${w}–${l}</div></div>
     <div class="metric"><div class="mlabel">Standing</div><div class="mval">#${standRank}<span style="font-size:13px;color:var(--text2)">/12</span></div></div>
