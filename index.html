@@ -470,77 +470,120 @@ function buildScoutReport(pid){
 // ═══════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════
-async function boot(){
-  setMsg("Connecting to Sleeper…");
+// ── CACHE HELPERS ─────────────────────────────────────────
+const CACHE_KEY = "dhq_" + LEAGUE_ID;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  // Helper: retry a fetch up to N times
-  async function tryFetch(url, retries=2){
-    for(let i=0;i<=retries;i++){
-      try{ return await jfetch(url); }
-      catch(e){ if(i===retries) throw e; await new Promise(r=>setTimeout(r,1500)); }
-    }
+function saveCache(data){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(),...data})); }catch(_){}
+}
+function loadCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    if(Date.now()-d.ts > CACHE_TTL) return null;
+    return d;
+  }catch(_){ return null; }
+}
+
+async function boot(){
+  // ── Step 1: Show cached data instantly if available ──
+  const cached = loadCache();
+  if(cached){
+    S.league=cached.league; S.rosters=cached.rosters; S.users=cached.users;
+    S.myRosterId=cached.rosters[0]?.roster_id;
+    applyLeagueToUI();
+    document.getElementById("loading").style.display="none";
+    document.getElementById("app").style.display="flex";
+    render();
+    setMsg("Refreshing data…");
+    // Refresh in background silently
+    refreshLeague();
+    loadFC();
+    setTimeout(()=>loadBackgroundData(), 500);
+    return;
   }
 
-  // Show the app shell immediately with a loading state
-  // Then load each piece independently — nothing blocks the UI
-  let leagueOk=false;
+  // ── Step 2: No cache — fetch with hard 8s deadline ──
+  setMsg("Connecting to Sleeper…");
 
-  // Try league + rosters + users — these are small and fast
+  // Hard deadline: show app after 8s no matter what
+  const showAppTimer = setTimeout(()=>{
+    document.getElementById("loading").style.display="none";
+    document.getElementById("app").style.display="flex";
+    render();
+  }, 8000);
+
   try{
-    setMsg("Loading league…");
     const [lg,rs,uArr] = await Promise.all([
-      tryFetch(`${SLP}/league/${LEAGUE_ID}`),
-      tryFetch(`${SLP}/league/${LEAGUE_ID}/rosters`),
-      tryFetch(`${SLP}/league/${LEAGUE_ID}/users`),
+      jfetch(`${SLP}/league/${LEAGUE_ID}`, 7000),
+      jfetch(`${SLP}/league/${LEAGUE_ID}/rosters`, 7000),
+      jfetch(`${SLP}/league/${LEAGUE_ID}/users`, 7000),
     ]);
+    clearTimeout(showAppTimer);
     S.league=lg; S.rosters=rs;
     const uMap={}; uArr.forEach(u=>{ uMap[u.user_id]=u; }); S.users=uMap;
     S.myRosterId=rs[0]?.roster_id;
-    leagueOk=true;
-
-    document.getElementById("ltitle").textContent=lg.name||"Dynasty HQ";
-    document.getElementById("lsub").textContent=`12-team · Superflex · PPR`;
-    const sel=document.getElementById("tsel");
-    rs.forEach(r=>{ const o=document.createElement("option"); o.value=r.roster_id; o.textContent=ownerName(r); sel.appendChild(o); });
+    saveCache({league:lg, rosters:rs, users:S.users});
+    applyLeagueToUI();
   }catch(e){
-    // Even if league load fails, show the app with an error state
-    setMsg("⚠ Could not load league: "+e.message+". Tap to retry.");
-    document.getElementById("lmsg").onclick=()=>{ location.reload(); };
+    clearTimeout(showAppTimer);
+    setMsg("⚠ "+e.message+" — tap to retry");
+    document.getElementById("lmsg").style.cursor="pointer";
+    document.getElementById("lmsg").onclick=()=>location.reload();
   }
 
-  // Show app regardless
   document.getElementById("loading").style.display="none";
   document.getElementById("app").style.display="flex";
   render();
 
-  if(!leagueOk) return;
-
-  // All remaining loads are fully independent — failures don't affect each other
-  // FC values: fast, high priority
+  if(!S.rosters.length) return;
   loadFC();
+  setTimeout(()=>loadBackgroundData(), 400);
+}
 
-  // Players DB: large (~8MB), load with longer timeout, no retry on mobile
-  setTimeout(()=>{
-    fetch(`${SLP}/players/nfl`)
-      .then(r=>r.ok?r.json():null)
-      .then(ps=>{ if(ps){ S.players=ps; render(); loadHistStats(); } })
-      .catch(e=>console.warn("Players DB failed (will retry):",e));
-  }, 300);
+function applyLeagueToUI(){
+  document.getElementById("ltitle").textContent=S.league?.name||"Dynasty HQ";
+  document.getElementById("lsub").textContent=`12-team · Superflex · PPR`;
+  const sel=document.getElementById("tsel");
+  sel.innerHTML="";
+  S.rosters.forEach(r=>{ const o=document.createElement("option"); o.value=r.roster_id; o.textContent=ownerName(r); sel.appendChild(o); });
+}
 
-  // NFL state + projections: medium priority
-  setTimeout(()=>{
-    jfetch(`${SLP}/state/nfl`,15000)
-      .then(nfl=>{ S.nflState=nfl; loadCurrentProj(nfl); })
-      .catch(()=>{});
-  }, 500);
+async function refreshLeague(){
+  try{
+    const [lg,rs,uArr]=await Promise.all([
+      jfetch(`${SLP}/league/${LEAGUE_ID}`,8000),
+      jfetch(`${SLP}/league/${LEAGUE_ID}/rosters`,8000),
+      jfetch(`${SLP}/league/${LEAGUE_ID}/users`,8000),
+    ]);
+    S.league=lg; S.rosters=rs;
+    const uMap={}; uArr.forEach(u=>{ uMap[u.user_id]=u; }); S.users=uMap;
+    saveCache({league:lg,rosters:rs,users:S.users});
+    computeLineupRanks(); render();
+  }catch(_){}
+}
 
-  // Transactions + picks: low priority, delay so they don't compete
+function loadBackgroundData(){
+  // Players DB (~8MB) — longer timeout, no blocking
+  fetch(`${SLP}/players/nfl`)
+    .then(r=>r.ok?r.json():null)
+    .then(ps=>{ if(ps){ S.players=ps; render(); loadHistStats(); } })
+    .catch(()=>{});
+
+  // NFL state + projections
+  jfetch(`${SLP}/state/nfl`,10000)
+    .then(nfl=>{ S.nflState=nfl; loadCurrentProj(nfl); })
+    .catch(()=>{});
+
+  // Transactions + picks — lowest priority
   setTimeout(()=>{
     loadTxns();
     jfetch(`${SLP}/league/${LEAGUE_ID}/traded_picks`,8000)
       .then(d=>{ S.tradedPicks=d; render(); })
       .catch(()=>{});
-  }, 3000);
+  }, 2000);
 }
 
 async function loadFC(){
