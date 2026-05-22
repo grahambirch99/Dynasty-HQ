@@ -155,7 +155,6 @@ const SLP  = "https://api.sleeper.app/v1";
 const SLP2 = "https://api.sleeper.com";
 const FC_URL = "https://api.fantasycalc.com/values/current?isDynasty=true&numQbs=2&numTeams=12&ppr=1";
 const ESPN_NEWS = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/news";
-const HIST_SEASONS = ["2022","2023","2024"];
 
 // ═══════════════════════════════════════════════════════════
 // STATE
@@ -230,7 +229,18 @@ function calcPPR(s){
 // Season-level PPR from accumulated stats
 function seasonPPR(pid, season){
   const s=S.histStats[pid]?.[season];
-  return s ? calcPPR(s) : null;
+  return s&&Object.keys(s).length ? calcPPR(s) : null;
+}
+// Get latest available season PPR
+function latestPPR(pid){
+  const h=S.histStats[pid];
+  if(!h) return null;
+  const seasons=Object.keys(h).sort((a,b)=>b-a);
+  for(const s of seasons){
+    const v=calcPPR(h[s]);
+    if(v>0) return {pts:v,season:s};
+  }
+  return null;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -282,7 +292,7 @@ function buildTeamAnalysis(roster){
 
   // Recent production (2024 PPR)
   const top5prod=[...pl].sort((a,b)=>fcVal(b.player_id)-fcVal(a.player_id)).slice(0,5);
-  const avgProd2024=top5prod.map(p=>seasonPPR(p.player_id,"2024")).filter(v=>v!==null);
+  const avgProd2024=top5prod.map(p=>latestPPR(p.player_id)?.pts).filter(v=>v!=null);
   const hasProd=avgProd2024.length>0;
 
   // Determine mode
@@ -367,15 +377,19 @@ function buildScoutReport(pid){
   const rank=fc?.rank||9999;
   const trend=fc?.trend30||0;
 
-  // Historical PPR
-  const ppr22=seasonPPR(pid,"2022"), ppr23=seasonPPR(pid,"2023"), ppr24=seasonPPR(pid,"2024");
-  const latestPPR=ppr24||ppr23||ppr22;
-  const hasHistory=ppr22!==null||ppr23!==null||ppr24!==null;
+  // Historical PPR - use all available career seasons
+  const careerH=S.histStats[pid]||{};
+  const sortedSeasons=Object.keys(careerH).sort((a,b)=>b-a);
+  const latestSeason=sortedSeasons[0];
+  const prevSeason=sortedSeasons[1];
+  const latestPPR=latestSeason?seasonPPR(pid,latestSeason):null;
+  const prevPPR=prevSeason?seasonPPR(pid,prevSeason):null;
+  const hasHistory=sortedSeasons.length>0;
 
   // Production trajectory
   let prodTrend="stable";
-  if(ppr23!==null&&ppr24!==null){
-    const delta=ppr24-ppr23;
+  if(latestPPR!==null&&prevPPR!==null){
+    const delta=latestPPR-prevPPR;
     if(delta>30) prodTrend="rising";
     else if(delta<-30) prodTrend="declining";
   }
@@ -413,9 +427,9 @@ function buildScoutReport(pid){
 
   if(hasHistory){
     const parts=[];
-    if(ppr22!==null) parts.push(`2022: ${ppr22.toFixed(0)} pts`);
-    if(ppr23!==null) parts.push(`2023: ${ppr23.toFixed(0)} pts`);
-    if(ppr24!==null) parts.push(`2024: ${ppr24.toFixed(0)} pts`);
+    if(sortedSeasons.includes("2022")) parts.push(`2022: ${seasonPPR(pid,"2022").toFixed(0)} pts`);
+    if(sortedSeasons.includes("2023")) parts.push(`2023: ${seasonPPR(pid,"2023").toFixed(0)} pts`);
+    if(sortedSeasons.includes("2024")) parts.push(`2024: ${seasonPPR(pid,"2024").toFixed(0)} pts`);
     s1+=`Season PPR totals — ${parts.join(", ")}. `;
     if(prodTrend==="rising") s1+=`Production is trending upward, a positive dynasty signal.`;
     else if(prodTrend==="declining") s1+=`Production has declined recently, which is worth monitoring.`;
@@ -548,236 +562,74 @@ async function loadCurrentProj(nfl){
   }catch(e){ console.warn("Proj",e); }
 }
 
-// ── OPTION 1: Bundled slim player lookup (name/pos/team/age/espn_id) ──────
-// This covers the ~500 most common dynasty players so rosters render instantly
-// Generated from Sleeper data — update periodically
-const PLAYER_BUNDLE = {
-  "4034":"Patrick Mahomes|QB|KC|29",
-  "4866":"Josh Allen|QB|BUF|28",
-  "4040":"Lamar Jackson|QB|BAL|27",
-  "6770":"Justin Herbert|QB|LAC|26",
-  "6786":"Ja'Marr Chase|WR|CIN|24",
-  "6804":"Tua Tagovailoa|QB|MIA|26",
-  "7547":"Trevor Lawrence|QB|JAC|25",
-  "8137":"Jalen Hurts|QB|PHI|26",
-  "5849":"Kyler Murray|QB|ARI|27",
-  "6801":"Justin Fields|QB|PIT|25",
-  "4039":"Dak Prescott|QB|DAL|31",
-  "3163":"Kirk Cousins|QB|ATL|36",
-  "5536":"Baker Mayfield|QB|TB|29",
-  "6797":"Jordan Love|QB|GB|26",
-  "3054":"Aaron Rodgers|QB|NYJ|41",
-  "7072":"Anthony Richardson|QB|IND|22",
-  "10859":"Caleb Williams|QB|CHI|23",
-  "10862":"Jayden Daniels|QB|WAS|23",
-  "10858":"Drake Maye|QB|NE|22",
-  "9509":"Bryce Young|QB|CAR|22",
-  "9226":"C.J. Stroud|QB|HOU|23",
-  "9955":"Will Levis|QB|TEN|25",
-  "7076":"Brock Purdy|QB|SF|24",
-  "4029":"Derek Carr|QB|NO|33",
-  "4017":"Russell Wilson|QB|PIT|36",
-  "3321":"Matthew Stafford|QB|LAR|36",
-  "6803":"Trey Lance|QB|DAL|24",
-  "7571":"Mac Jones|QB|NE|26",
-  "3198":"Geno Smith|QB|SEA|34",
-  "4149":"Deshaun Watson|QB|CLE|29",
-  "6023":"Gardner Minshew|QB|LV|28",
-  "3859":"Jacoby Brissett|QB|WAS|31",
-  "4035":"Alvin Kamara|RB|NO|29",
-  "6783":"Jake Ferguson|TE|DAL|25",
-  "7543":"Najee Harris|RB|PIT|26",
-  "5012":"Derrick Henry|RB|BAL|30",
-  "6806":"Travis Etienne|RB|JAC|25",
-  "6813":"Javonte Williams|RB|DEN|24",
-  "7553":"Breece Hall|RB|NYJ|23",
-  "7569":"Kenneth Walker|RB|SEA|24",
-  "7572":"Rachaad White|RB|TB|25",
-  "7574":"Brian Robinson|RB|WAS|25",
-  "8112":"Bijan Robinson|RB|ATL|23",
-  "8120":"Jahmyr Gibbs|RB|DET|22",
-  "8132":"De'Von Achane|RB|MIA|23",
-  "8136":"Zach Charbonnet|RB|SEA|23",
-  "10226":"Ashton Jeanty|RB|LV|21",
-  "10229":"Omarion Hampton|RB|LAC|21",
-  "10232":"TreVeyon Henderson|RB|NE|22",
-  "10235":"Quinshon Judkins|RB|CLE|21",
-  "4084":"Aaron Jones|RB|MIN|30",
-  "4068":"Nick Chubb|RB|CLE|29",
-  "5247":"Josh Jacobs|RB|GB|26",
-  "5892":"James Conner|RB|ARI|29",
-  "6126":"David Montgomery|RB|DET|27",
-  "6928":"D'Andre Swift|RB|CHI|26",
-  "7060":"Rhamondre Stevenson|RB|NE|25",
-  "7552":"Isaiah Pacheco|RB|KC|25",
-  "6794":"James Cook|RB|BUF|24",
-  "6145":"Tony Pollard|RB|TEN|27",
-  "6160":"Deebo Samuel|WR|SF|28",
-  "7234":"Khalil Herbert|RB|CHI|26",
-  "7240":"Kyren Williams|RB|LAR|24",
-  "6614":"Miles Sanders|RB|CAR|27",
-  "7556":"Zamir White|RB|LV|24",
-  "6130":"Cam Akers|RB|MIN|25",
-  "7561":"Dameon Pierce|RB|HOU|24",
-  "4046":"Kareem Hunt|RB|KC|29",
-  "8134":"Roschon Johnson|RB|CHI|23",
-  "9491":"Jonathon Brooks|RB|CAR|21",
-  "6820":"Elijah Mitchell|RB|SF|26",
-  "7066":"Damien Harris|RB|BUF|27",
-  "6958":"Raheem Mostert|RB|MIA|32",
-  "7049":"Rex Burkhead|RB|HOU|33",
-  "6790":"CeeDee Lamb|WR|DAL|25",
-  "6795":"Justin Jefferson|WR|MIN|25",
-  "4685":"Davante Adams|WR|LV|31",
-  "5938":"DK Metcalf|WR|SEA|26",
-  "5954":"Terry McLaurin|WR|WAS|28",
-  "6309":"Cooper Kupp|WR|LAR|31",
-  "6320":"Jelani Woods|TE|IND|25",
-  "6323":"Jaylen Waddle|WR|MIA|25",
-  "6325":"DeVonta Smith|WR|PHI|26",
-  "6328":"Amon-Ra St. Brown|WR|DET|24",
-  "6332":"Brandon Aiyuk|WR|SF|26",
-  "6800":"George Pickens|WR|PIT|23",
-  "6809":"Jahan Dotson|WR|PHI|24",
-  "6815":"Khalil Shakir|WR|BUF|25",
-  "6821":"Romeo Doubs|WR|GB|24",
-  "7563":"Tee Higgins|WR|CIN|25",
-  "7564":"Garrett Wilson|WR|NYJ|24",
-  "7568":"Drake London|WR|ATL|23",
-  "7570":"Jameson Williams|WR|DET|23",
-  "7573":"Chris Olave|WR|NO|24",
-  "8111":"Quentin Johnston|WR|LAC|23",
-  "8113":"Jordan Addison|WR|MIN|22",
-  "8114":"Zay Flowers|WR|BAL|23",
-  "8116":"Rashee Rice|WR|KC|24",
-  "8118":"Puka Nacua|WR|LAR|23",
-  "8121":"Jayden Reed|WR|GB|24",
-  "9228":"Malik Nabers|WR|NYG|21",
-  "9229":"Brian Thomas Jr|WR|JAC|22",
-  "9231":"Rome Odunze|WR|CHI|22",
-  "9232":"Xavier Worthy|WR|KC|21",
-  "10860":"Tetairoa McMillan|WR|CAR|21",
-  "10863":"Emeka Egbuka|WR|TB|22",
-  "8126":"Jaxon Smith-Njigba|WR|SEA|22",
-  "4881":"Mike Evans|WR|TB|30",
-  "6003":"Tyler Lockett|WR|SEA|31",
-  "6006":"Courtland Sutton|WR|DEN|29",
-  "3164":"Keenan Allen|WR|CHI|32",
-  "7560":"Dontayvion Wicks|WR|GB|23",
-  "6350":"Elijah Moore|WR|CLE|24",
-  "8123":"Marvin Harrison Jr|WR|ARI|22",
-  "10861":"Luther Burden III|WR|CHI|21",
-  "6340":"Diontae Johnson|WR|CAR|27",
-  "5104":"Adam Thielen|WR|CAR|33",
-  "4137":"Odell Beckham Jr|WR|FA|31",
-  "6346":"Kadarius Toney|WR|KC|25",
-  "6817":"Skyy Moore|WR|KC|24",
-  "5844":"Travis Kelce|TE|KC|35",
-  "5001":"George Kittle|TE|SF|30",
-  "6111":"Mark Andrews|TE|BAL|29",
-  "4148":"Kyle Pitts|TE|ATL|23",
-  "5003":"T.J. Hockenson|TE|MIN|26",
-  "5006":"David Njoku|TE|CLE|28",
-  "5010":"Dallas Goedert|TE|PHI|29",
-  "5016":"Evan Engram|TE|JAC|29",
-  "6048":"Cole Kmet|TE|CHI|25",
-  "6270":"Pat Freiermuth|TE|PIT|25",
-  "6780":"Isaiah Likely|TE|BAL|24",
-  "7558":"Trey McBride|TE|ARI|25",
-  "8130":"Tucker Kraft|TE|GB|23",
-  "8133":"Darnell Washington|TE|PIT|23",
-  "9493":"Brock Bowers|TE|LV|22",
-  "9500":"Ben Sinnott|TE|WAS|23",
-  "7546":"Sam LaPorta|TE|DET|23",
-  "7788":"Dalton Kincaid|TE|BUF|24",
-  "7791":"Michael Mayer|TE|LV|23",
-  "7792":"Luke Musgrave|TE|GB|24",
-  "4199":"Zach Ertz|TE|ARI|33",
-  "5018":"Noah Fant|TE|SEA|27"
-};
+// Player display name cache (built from individual fetches)
+// No pre-bundle — all data comes from Sleeper /players/nfl/{pid}
 
-// Build a proper player object from bundle string
-function bundleToPlayer(pid, str){
-  if(!str) return null;
-  const [full_name,position,team,age]=str.split("|");
-  return {player_id:pid,full_name,position,team,age:parseInt(age),fantasy_positions:[position]};
-}
 
-// ── OPTION 4: Fetch only rostered players individually ────────────────
+// ── Fetch only rostered players individually (no bulk 8MB endpoint) ──
 async function loadRosteredPlayers(){
-  // Get all unique player IDs across all rosters
   const allPids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
+  // Prioritise my roster players first
+  const myPids=(rosterById(S.myRosterId)||S.rosters[0])?.players||[];
+  const rest=allPids.filter(p=>!myPids.includes(p));
+  const ordered=[...myPids,...rest];
 
-  // Step 1: Apply bundle data instantly for known players
-  let missing=[];
-  allPids.forEach(pid=>{
-    if(S.players[pid]) return; // already have it
-    if(PLAYER_BUNDLE[pid]){
-      const parts=PLAYER_BUNDLE[pid].split("|");
-      S.players[pid]={player_id:pid,full_name:parts[0],position:parts[1],team:parts[2],age:parseInt(parts[3]),fantasy_positions:[parts[1]]};
-    } else {
-      missing.push(pid);
-    }
-  });
-
-  // Render immediately with bundle data — rosters are now visible
-  render();
-
-  // Step 2: Fetch missing players individually in small batches
-  if(missing.length>0){
-    for(let i=0;i<missing.length;i+=8){
-      const chunk=missing.slice(i,i+8);
-      await Promise.all(chunk.map(async pid=>{
-        try{
-          const ctrl=new AbortController();
-          const t=setTimeout(()=>ctrl.abort(),5000);
-          const r=await fetch(`${SLP}/players/nfl/${pid}`,{signal:ctrl.signal});
-          clearTimeout(t);
-          if(r.ok){
-            const p=await r.json();
-            if(p) S.players[pid]=p;
-          }
-        }catch(_){}
-      }));
-    }
-    render();
+  // Fetch in batches of 10 — each request is tiny (~1KB per player)
+  for(let i=0;i<ordered.length;i+=10){
+    const chunk=ordered.slice(i,i+10);
+    await Promise.all(chunk.map(async pid=>{
+      if(S.players[pid]?.full_name) return; // already loaded
+      try{
+        const ctrl=new AbortController();
+        const t=setTimeout(()=>ctrl.abort(),6000);
+        const r=await fetch(`${SLP}/players/nfl/${pid}`,{signal:ctrl.signal});
+        clearTimeout(t);
+        if(r.ok){ const p=await r.json(); if(p&&p.full_name) S.players[pid]=p; }
+      }catch(_){}
+    }));
+    // Re-render after each batch so names appear progressively
+    if(i===0||i%30===0) render();
   }
-
-  // Step 3: Now load historical stats with all player data ready
+  render();
+  // Now load career stats
   loadHistStats();
 }
 
-// Load historical season stats — my roster first, then others
+// Load career stats for all rostered players
+// Uses Sleeper's weekly grouping endpoint and aggregates by season
+// Returns all seasons in one call per player
 async function loadHistStats(){
-  const myR = rosterById(S.myRosterId)||S.rosters[0];
-  const myPids = myR?.players||[];
-  const otherPids = [...new Set(S.rosters.flatMap(r=>r.roster_id!==S.myRosterId?r.players||[]:[])) ];
-  // Load my players first, then everyone else
-  const ordered = [...myPids, ...otherPids.filter(p=>!myPids.includes(p))];
+  const myR=rosterById(S.myRosterId)||S.rosters[0];
+  const myPids=myR?.players||[];
+  const allPids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
+  const rest=allPids.filter(p=>!myPids.includes(p));
+  const ordered=[...myPids,...rest];
 
-  for(const season of HIST_SEASONS){
-    // Small chunks of 5 to be gentle on mobile connections
-    for(let i=0;i<ordered.length;i+=5){
-      const chunk=ordered.slice(i,i+5);
-      await Promise.all(chunk.map(async pid=>{
-        try{
-          const ctrl=new AbortController();
-          const t=setTimeout(()=>ctrl.abort(),5000);
-          const r=await fetch(`${SLP2}/stats/nfl/player/${pid}?season_type=regular&season=${season}&grouping=season`,{signal:ctrl.signal});
-          clearTimeout(t);
-          const data=r.ok?await r.json():null;
-          if(data&&data.stats){
-            if(!S.histStats[pid]) S.histStats[pid]={};
-            S.histStats[pid][season]=data.stats;
+  for(let i=0;i<ordered.length;i+=6){
+    const chunk=ordered.slice(i,i+6);
+    await Promise.all(chunk.map(async pid=>{
+      if(S.histStats[pid]) return; // already loaded
+      try{
+        // Fetch each of the seasons we care about
+        const seasons=["2018","2019","2020","2021","2022","2023","2024","2025"];
+        const results=await Promise.all(seasons.map(season=>
+          fetch(`${SLP2}/stats/nfl/player/${pid}?season_type=regular&season=${season}&grouping=season`,{signal:AbortSignal.timeout(5000)})
+            .then(r=>r.ok?r.json():null).catch(()=>null)
+        ));
+        const career={};
+        seasons.forEach((season,idx)=>{
+          const d=results[idx];
+          if(d&&d.stats&&Object.keys(d.stats).length>0){
+            career[season]={...d.stats, gp: d.stats.gp||d.stats.games_played||0};
           }
-        }catch(_){}
-      }));
-      // Small delay between chunks to avoid saturating mobile connection
-      if(i%20===0&&i>0) await new Promise(r=>setTimeout(r,200));
-    }
-    S.statsLoaded=true;
-    render();
+        });
+        if(Object.keys(career).length>0) S.histStats[pid]=career;
+      }catch(_){}
+    }));
+    if(i===0) { S.statsLoaded=true; render(); }
   }
+  S.statsLoaded=true;
+  render();
 }
 
 async function loadTxns(){
@@ -1075,11 +927,11 @@ function renderTradeBreakdown(){
     ${[["You send",S.tradeA],["You receive",S.tradeB]].map(([label,pids])=>`
     <div style="margin-bottom:8px">
       <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${label}</div>
-      ${pids.map(pid=>{ const p=S.players[pid]||{}; const fc=S.fcMap[pid]; const ppr24=seasonPPR(pid,"2024"); const ppr23=seasonPPR(pid,"2023");
+      ${pids.map(pid=>{ const p=S.players[pid]||{}; const fc=S.fcMap[pid]; const lp=latestPPR(pid); const ppr24=lp?.pts||null; const ppr24yr=lp?.season||"";
         return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
           <span class="pos ${posClass(p.position||"")}" style="font-size:9px;min-width:22px">${p.position||"?"}</span>
           <span style="flex:1;font-size:12px;font-weight:500">${esc(p.full_name||pid)}</span>
-          ${ppr24!==null?`<span style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace">'24: ${ppr24.toFixed(0)}</span>`:""}
+          ${ppr24!==null?`<span style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace">'${ppr24yr}: ${ppr24.toFixed(0)}</span>`:""}
           ${fc?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)">#${fc.rank}</span>`:""}
           ${valBadge(fcVal(pid))}
         </div>`; }).join("")}
@@ -1090,7 +942,7 @@ function renderTradeBreakdown(){
 window._tgl=(side,pid)=>{ if(side==="A") S.tradeA=S.tradeA.includes(pid)?S.tradeA.filter(p=>p!==pid):[...S.tradeA,pid]; else S.tradeB=S.tradeB.includes(pid)?S.tradeB.filter(p=>p!==pid):[...S.tradeB,pid]; render(); };
 
 function copyTrade(){
-  const fmt=pids=>pids.map(pid=>{ const fc=S.fcMap[pid]; const ppr24=seasonPPR(pid,"2024"); return `${playerName(pid)} (FC:${fc?.value||0}, #${fc?.rank||"?"}, 2024: ${ppr24!==null?ppr24.toFixed(0)+"pts":"no data"})`; }).join(", ");
+  const fmt=pids=>pids.map(pid=>{ const fc=S.fcMap[pid]; const lp2=latestPPR(pid); const ppr24=lp2?.pts||null; return `${playerName(pid)} (FC:${fc?.value||0}, #${fc?.rank||"?"}, ${lp2?.season||"pts"}: ${ppr24!==null?ppr24.toFixed(0)+"pts":"no data"})`; }).join(", ");
   const vA=S.tradeA.reduce((s,pid)=>s+fcVal(pid),0), vB=S.tradeB.reduce((s,pid)=>s+fcVal(pid),0);
   const txt=`Dynasty trade (12-team SF PPR):\nI SEND [FC: ${vA.toLocaleString()}]: ${fmt(S.tradeA)||"nothing"}\nI RECEIVE [FC: ${vB.toLocaleString()}]: ${fmt(S.tradeB)||"nothing"}\nWho wins short vs long term? Should I do it, pass, or counter?`;
   if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>showToast("Copied!"));
@@ -1112,7 +964,7 @@ function renderSearch(){
   <input class="inp" placeholder="Search any NFL player…" value="${esc(q)}" oninput="window._sq=this.value;render()" style="margin-bottom:10px"/>
   <div class="filters">${["ALL","QB","RB","WR","TE"].map(p=>`<button class="btn btn-sm ${pos===p?"on":""}" onclick="window._sp='${p}';render()">${p}</button>`).join("")}</div>
   ${!Object.keys(S.players||{}).length?`<div class="empty">Player data loading…</div>`:""}
-  ${results.map(([pid,p])=>{ const fc=S.fcMap[pid]; const val=fc?.value||0; const ppr24=seasonPPR(pid,"2024");
+  ${results.map(([pid,p])=>{ const fc=S.fcMap[pid]; const val=fc?.value||0; const lp3=latestPPR(pid); const ppr24=lp3?.pts||null;
     return `<div class="card" style="padding:9px 12px;cursor:pointer;margin-bottom:6px" onclick="window._ssel='${pid}';render()">
       <div style="display:flex;align-items:center;gap:8px">
         <span class="pos ${posClass(p.position||"")}" style="min-width:26px;text-align:center">${p.position||"?"}</span>
@@ -1133,19 +985,47 @@ function renderPlayerDetail(pid){
   const ownerR=S.rosters.find(r=>(r.players||[]).includes(pid));
   const news=S.newsCache[pid];
   const scout=S.fcLoaded?buildScoutReport(pid):null;
-  const ppr22=seasonPPR(pid,"2022"),ppr23=seasonPPR(pid,"2023"),ppr24=seasonPPR(pid,"2024");
   const rawStats=S.histStats[pid];
   if(news===undefined&&!window[`_nl_${pid}`]){ window[`_nl_${pid}`]=true; fetchPlayerNews(pid).then(()=>render()); }
-  const s24=rawStats?.["2024"]||{},s23=rawStats?.["2023"]||{},s22=rawStats?.["2022"]||{};
   const pos=(p.position||"").toUpperCase();
-  const statKeys=pos==="QB"?[["pass_yd","Pass Yd"],["pass_td","TD"],["pass_int","INT"],["rush_yd","Rush Yd"]]:
-                 pos==="RB"?[["rush_yd","Rush Yd"],["rush_td","Rush TD"],["rec","Rec"],["rec_yd","Rec Yd"]]:
-                            [["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","TD"],["rush_yd","Rush Yd"]];
-  function statRow(s,yr){
-    if(!s||!Object.keys(s).length) return "";
-    const cells=statKeys.filter(([k])=>parseFloat(s[k]||0)>0).map(([k,l])=>`<div class="stat-cell"><div class="stat-label">${l}</div><div class="stat-val" style="font-size:13px">${parseFloat(s[k]).toFixed(0)}</div></div>`).join("");
-    if(!cells) return "";
-    return `<div style="margin-bottom:6px"><div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${yr}</div><div class="stat-grid">${cells}<div class="stat-cell"><div class="stat-label">Fant Pts</div><div class="stat-val" style="font-size:13px;color:var(--green)">${calcPPR(s).toFixed(0)}</div></div></div></div>`;
+  // Career seasons sorted newest first
+  const careerSeasons=rawStats?Object.keys(rawStats).sort((a,b)=>b-a):[];
+  // Key stats by position for the detail stat rows
+  const statKeys=pos==="QB"
+    ?[["pass_yd","Pass Yd"],["pass_td","Pass TD"],["pass_int","INT"],["rush_yd","Rush Yd"],["rush_td","Rush TD"]]
+    :pos==="RB"
+    ?[["rush_yd","Rush Yd"],["rush_td","Rush TD"],["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","Rec TD"]]
+    :pos==="TE"
+    ?[["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","TD"],["tgt","Tgts"]]
+    :[["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","TD"],["rush_yd","Rush Yd"],["tgt","Tgts"]];
+
+  function careerTable(){
+    if(!careerSeasons.length) return "";
+    const rows=careerSeasons.map(yr=>{
+      const s=rawStats[yr];
+      const fpts=calcPPR(s).toFixed(1);
+      const gp=parseInt(s.gp||s.games_played||0);
+      const fptsColor=parseFloat(fpts)>300?"var(--green)":parseFloat(fpts)>200?"var(--teal)":parseFloat(fpts)>100?"var(--text)":"var(--text3)";
+      // Build stat string for this season
+      let statStr="";
+      if(pos==="QB"){
+        const pyds=parseInt(s.pass_yd||0),ptds=parseInt(s.pass_td||0),ints=parseInt(s.pass_int||0),ryds=parseInt(s.rush_yd||0);
+        if(pyds>0) statStr=`${pyds.toLocaleString()} Yds · ${ptds} TD · ${ints} INT${ryds>0?" · "+ryds+" Rush":""}`; 
+      } else if(pos==="RB"){
+        const ryds=parseInt(s.rush_yd||0),rtds=parseInt(s.rush_td||0),rec=parseInt(s.rec||0),recyds=parseInt(s.rec_yd||0);
+        if(ryds>0||rec>0) statStr=`${ryds} Rush Yd · ${rtds} TD · ${rec} Rec · ${recyds} Rec Yd`;
+      } else {
+        const rec=parseInt(s.rec||0),recyds=parseInt(s.rec_yd||0),tds=parseInt(s.rec_td||0),tgts=parseInt(s.tgt||0);
+        if(rec>0) statStr=`${tgts>0?tgts+" Tgt · ":""}${rec} Rec · ${recyds} Yd · ${tds} TD`;
+      }
+      return `<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px;font-weight:600;min-width:44px;color:var(--text2)">${yr}</span>
+        <span style="font-size:12px;color:var(--text3);min-width:26px">${gp>0?gp+"gm":""}</span>
+        <span style="flex:1;font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${statStr}</span>
+        <span style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:${fptsColor};min-width:52px;text-align:right">${parseFloat(fpts)>0?fpts+" pts":""}</span>
+      </div>`;
+    }).join("");
+    return `<div style="margin-bottom:6px">${rows}</div>`;
   }
   return `
   <button class="btn btn-sm" onclick="window._ssel=null;render()" style="margin-bottom:11px">← Back</button>
@@ -1163,12 +1043,11 @@ function renderPlayerDetail(pid){
         <div class="metric"><div class="mlabel">FC Value (SF)</div><div class="mval" style="font-size:18px">${fc.value.toLocaleString()}</div></div>
         <div class="metric"><div class="mlabel">Overall Rank</div><div class="mval" style="font-size:18px">#${fc.rank}</div><div class="msub">Pos: #${fc.posRank} &nbsp;${trendBadge(fc.trend30)}</div></div>
       `:`<div class="metric" style="grid-column:span 2"><div class="mlabel">Dynasty Value</div><div class="mval" style="font-size:13px;color:var(--text3)">${S.fcLoaded?"Not ranked":"Loading…"}</div></div>`}
-      ${ppr24!==null?`<div class="metric"><div class="mlabel">2024 Fant Pts</div><div class="mval" style="font-size:18px;color:var(--green)">${ppr24.toFixed(0)}</div></div>`:""}
-      ${ppr23!==null?`<div class="metric"><div class="mlabel">2023 Fant Pts</div><div class="mval" style="font-size:16px">${ppr23.toFixed(0)}</div></div>`:""}
-      ${ppr22!==null?`<div class="metric"><div class="mlabel">2022 Fant Pts</div><div class="mval" style="font-size:16px">${ppr22.toFixed(0)}</div></div>`:""}
+      ${careerSeasons[0]&&rawStats?`<div class="metric"><div class="mlabel">${careerSeasons[0]} Pts</div><div class="mval" style="font-size:18px;color:var(--green)">${calcPPR(rawStats[careerSeasons[0]]).toFixed(0)}</div></div>`:""}
+      ${careerSeasons[1]&&rawStats?`<div class="metric"><div class="mlabel">${careerSeasons[1]} Pts</div><div class="mval" style="font-size:16px">${calcPPR(rawStats[careerSeasons[1]]).toFixed(0)}</div></div>`:""}
       ${p.height?`<div class="metric"><div class="mlabel">Height</div><div class="mval" style="font-size:16px">${Math.floor(p.height/12)}'${p.height%12}"</div></div>`:""}
     </div>
-    ${statRow(s24,"2024 Season")}${statRow(s23,"2023 Season")}${statRow(s22,"2022 Season")}
+     ${careerSeasons.length?`<div class="ctitle" style="margin-top:4px">Career Stats (PPR)</div>${careerTable()}`:"<div style='font-size:12px;color:var(--text3);padding:4px 0'>Loading career stats…</div>"}
   </div>
   ${scout?`
   <div class="card">
@@ -1192,13 +1071,13 @@ function prow(p,opts={}){
   const val=fcVal(p.player_id);
   const fc=S.fcMap[p.player_id];
   const age=p.age||(p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null);
-  const prod=showProd?seasonPPR(p.player_id,prodYear):null;
+  const prodData=showProd?latestPPR(p.player_id):null; const prod=prodData?.pts||null; const prodYrLabel=prodData?.season||'24';
   return `<div class="prow"${clickable?` style="cursor:pointer" onclick="window._ssel='${p.player_id}';go('search')"`:""}>
     <span class="pos ${posClass(pos)}" style="min-width:26px;text-align:center">${pos||"?"}</span>
     <span class="pname">${esc(p.full_name||p.player_id)}</span>
     ${age?`<span class="pmeta">${age}y</span>`:""}
     ${p.team?`<span class="pteam">${p.team}</span>`:""}
-    ${prod!==null?`<span style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;min-width:38px;text-align:right">${prod.toFixed(0)}pts</span>`:""}
+    ${prod!==null?`<span style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;min-width:38px;text-align:right">${prod.toFixed(0)}</span>`:""}
     ${showTrend&&fc?trendBadge(fc.trend30):""}
     ${showRank&&fc?rankBadge(fc.rank):""}
     ${showVal?valBadge(val):""}
