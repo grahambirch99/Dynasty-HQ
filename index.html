@@ -5,1148 +5,2351 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0E0F13"/>
 <title>Dynasty HQ</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<!-- React 18 -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<!-- React Router v6 -->
+<script crossorigin src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.production.min.js"></script>
+<!-- Babel for JSX -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0d0f12;--bg2:#151820;--bg3:#1c2029;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
-  --text:#f0f2f5;--text2:#8891a4;--text3:#555e6e;
-  --accent:#4f8ef7;--green:#3ecf8e;--amber:#f6a623;--red:#f25c54;--purple:#a78bfa;--teal:#2dd4bf;
-  --r:10px;--rl:14px;
-  --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0f12;
+  --bg2: #151820;
+  --bg3: #1c2029;
+  --bg4: #232836;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f2f5;
+  --text2: #8891a4;
+  --text3: #555e6e;
+  --accent: #3ecf8e;
+  --accent-blue: #4f8ef7;
+  --amber: #f6a623;
+  --red: #f25c54;
+  --purple: #a78bfa;
+  --teal: #2dd4bf;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
 }
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%;overscroll-behavior:none}
-.app{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
-.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:calc(var(--safe-top)+10px) 14px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:100}
-.topbar h1{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1}
-.topbar p{font-size:11px;color:var(--text2)}
-.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 13px calc(var(--safe-bot)+76px)}
-.bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);padding:7px 0 calc(var(--safe-bot)+3px);display:flex;justify-content:space-around;z-index:100}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 6px;border:none;background:none;color:var(--text3);font-family:inherit;font-size:10px;font-weight:500;cursor:pointer;min-width:52px;-webkit-tap-highlight-color:transparent}
-.nav-btn svg{width:20px;height:20px;stroke-width:1.75}
-.nav-btn.active{color:var(--accent)}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:13px;margin-bottom:10px}
-.ctitle{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:11px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
-.metric{background:var(--bg3);border-radius:var(--r);padding:10px 11px}
-.mlabel{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
-.mval{font-size:20px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
-.msub{font-size:11px;color:var(--text2);margin-top:1px}
-.prow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
-.prow:last-child{border-bottom:none}
-.pname{flex:1;font-size:13px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pmeta{font-size:11px;color:var(--text3);flex-shrink:0}
-.pteam{font-size:11px;color:var(--text2);min-width:24px;flex-shrink:0}
-.pos{font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;min-width:26px;text-align:center;font-family:'DM Mono',monospace;flex-shrink:0}
-.QB{background:rgba(242,92,84,.15);color:#f25c54}.RB{background:rgba(62,207,142,.15);color:#3ecf8e}
-.WR{background:rgba(79,142,247,.15);color:#4f8ef7}.TE{background:rgba(246,166,35,.15);color:#f6a623}
-.K,.DEF,.DL,.LB,.DB,.IDL,.EDGE{background:rgba(136,145,164,.13);color:#8891a4}
-.vb{font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;flex-shrink:0;white-space:nowrap}
-.vS{background:rgba(167,139,250,.15);color:var(--purple)}.vA{background:rgba(79,142,247,.15);color:var(--accent)}
-.vB{background:rgba(62,207,142,.15);color:var(--green)}.vC{background:rgba(246,166,35,.15);color:var(--amber)}
-.vD{background:rgba(242,92,84,.15);color:var(--red)}.vNA{background:rgba(136,145,164,.08);color:var(--text3)}
-.trend-up{color:var(--green);font-size:11px;font-family:'DM Mono',monospace}
-.trend-dn{color:var(--red);font-size:11px;font-family:'DM Mono',monospace}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);-webkit-tap-highlight-color:transparent}
-.btn:active{opacity:.7}.btn.on{background:rgba(79,142,247,.14);border-color:rgba(79,142,247,.4);color:var(--accent)}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn-sm{padding:4px 9px;font-size:11px}
-.filters{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
-.inp{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:inherit;font-size:14px;outline:none;-webkit-appearance:none}
-.inp:focus{border-color:var(--accent)}.inp::placeholder{color:var(--text3)}
-.sel{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit;font-size:13px;outline:none;-webkit-appearance:none;cursor:pointer}
-.sel:focus{border-color:var(--accent)} select option{background:#1c2029}
-.srow{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;margin-bottom:2px}
-.srow.me{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2)}
-.srank{font-size:11px;color:var(--text3);width:20px;font-family:'DM Mono',monospace;flex-shrink:0}
-.sname{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.srec{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;min-width:36px;text-align:right;flex-shrink:0}
-.spts{font-size:11px;color:var(--text3);min-width:50px;text-align:right;font-family:'DM Mono',monospace;flex-shrink:0}
-.ytag{font-size:9px;background:rgba(79,142,247,.2);color:var(--accent);padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:700}
-.prog-wrap{display:flex;align-items:center;gap:9px;margin-bottom:7px}
-.prog-bar{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
-.prog-fill{height:100%;border-radius:2px}
-.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.tside{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:10px}
-.tside h3{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
-.tlist{max-height:190px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.tchk{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer}
-.tchk:last-child{border-bottom:none}
-.tchk input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;flex-shrink:0}
-.ttotal{margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text2)}
-.verdict{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:14px;text-align:center}
-.txn{background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:7px;border:1px solid var(--border)}
-.txnhead{display:flex;align-items:center;gap:7px;margin-bottom:6px}
-.txntype{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em}
-.txn-trade{background:rgba(79,142,247,.15);color:var(--accent)}
-.txn-add{background:rgba(62,207,142,.15);color:var(--green)}
-.txn-waiver{background:rgba(167,139,250,.15);color:var(--purple)}
-.txndate{font-size:11px;color:var(--text3);margin-left:auto;flex-shrink:0}
-.pkbadge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.12);color:var(--purple);font-family:'DM Mono',monospace}
-.spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
-.spin-sm{width:16px;height:16px;border-width:2px}
-@keyframes sp{to{transform:rotate(360deg)}}
-.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;gap:14px}
-.dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;flex-shrink:0}
-.ok{background:var(--green)}.pend{background:var(--amber);animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.empty{text-align:center;padding:2rem 0;color:var(--text3);font-size:13px}
-.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--green);color:#0d0f12;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .2s}
-.toast.show{opacity:1}
-.news-item{padding:9px 0;border-bottom:1px solid var(--border)}
-.news-item:last-child{border-bottom:none}
-.news-headline{font-size:13px;font-weight:500;margin-bottom:2px;line-height:1.4}
-.news-meta{font-size:11px;color:var(--text3)}
-.news-desc{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5}
-.analysis-box{background:linear-gradient(135deg,rgba(79,142,247,.07),rgba(167,139,250,.05));border:1px solid rgba(79,142,247,.18);border-radius:var(--rl);padding:14px;margin-bottom:10px}
-.stat-grid{display:flex;flex-wrap:wrap;gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px}
-.stat-cell{background:var(--bg3);flex:1;min-width:70px;padding:8px 10px;text-align:center}
-.stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
-.stat-val{font-size:15px;font-weight:600;font-family:'DM Mono',monospace}
-.year-tab{display:flex;gap:4px;margin-bottom:10px}
-.rank-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;margin-bottom:2px}
-.rank-row.hl{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2)}
-.scout-section{margin-bottom:10px}
-.scout-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.scout-text{font-size:13px;color:var(--text2);line-height:1.65}
-.verdict-tag{display:inline-block;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:8px}
-.buy{background:rgba(62,207,142,.15);color:var(--green)}
-.sell{background:rgba(242,92,84,.15);color:var(--red)}
-.hold{background:rgba(246,166,35,.15);color:var(--amber)}
-::-webkit-scrollbar{width:3px}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+/* App shell */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Top bar */
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-top) + 10px) 14px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.topbar-title { flex: 1; min-width: 0; }
+.topbar-title h1 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar-title p  { font-size: 11px; color: var(--text2); }
+
+/* Main scrollable area */
+.main-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 13px calc(var(--safe-bot) + 76px);
+}
+
+/* Bottom nav */
+.bottomnav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 7px 0 calc(var(--safe-bot) + 3px);
+  display: flex;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  border: none;
+  background: none;
+  color: var(--text3);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 52px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .15s;
+}
+.nav-btn svg { width: 20px; height: 20px; }
+.nav-btn.active { color: var(--accent); }
+
+/* Team select */
+.team-select {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.team-select:focus { border-color: var(--accent); }
+select option { background: #1c2029; }
+
+/* Input */
+.inp {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  -webkit-appearance: none;
+}
+.inp:focus { border-color: var(--accent); }
+.inp::placeholder { color: var(--text3); }
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.fade-in { animation: fadeIn .2s ease; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* Grid helpers */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 10px; }
+
 </style>
 </head>
 <body>
-<div class="toast" id="toast"></div>
-<div class="app" id="app">
-  <div class="topbar">
-    <div style="flex:1;min-width:0"><h1 id="ltitle">Dynasty HQ</h1><p id="lsub">12-team · Superflex · PPR</p></div>
-    <select class="sel" style="width:auto;max-width:130px;font-size:11px" id="tsel" onchange="setMyTeam(this.value)"></select>
-  </div>
-  <main class="main" id="main"></main>
-  <nav class="bottomnav">
-    <button class="nav-btn active" data-p="dash" onclick="go('dash')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Home
-    </button>
-    <button class="nav-btn" data-p="roster" onclick="go('roster')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Roster
-    </button>
-    <button class="nav-btn" data-p="league" onclick="go('league')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3 2.7-5 6-5"/><circle cx="16" cy="8" r="3"/><path d="M22 20c0-3-2.7-5-6-5"/><path d="M9 20c0-3 2-5 7-5"/></svg>League
-    </button>
-    <button class="nav-btn" data-p="trade" onclick="go('trade')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>Trade
-    </button>
-    <button class="nav-btn" data-p="search" onclick="go('search')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>Search
-    </button>
-  </nav>
-</div>
-<script>
-// ═══════════════════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════════════════
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+// Destructure React hooks globally
+const { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext } = React;
+// Destructure React Router
+const { HashRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate, Link } = ReactRouterDOM;
+
+
+// ═══════════ store ═══════════
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const LEAGUE_ID = "1313311335559200768";
 const SLP  = "https://api.sleeper.app/v1";
 const SLP2 = "https://api.sleeper.com";
 const FC_URL = "https://api.fantasycalc.com/values/current?isDynasty=true&numQbs=2&numTeams=12&ppr=1";
 const ESPN_NEWS = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/news";
+const CURRENT_SEASON = "2025";
+const PLAYERS_CACHE_KEY = "dhq_players_v2";
+const PLAYERS_CACHE_TTL = 24 * 60 * 60 * 1000;
+const LEAGUE_CACHE_KEY = "dhq_league_v2";
+const LEAGUE_CACHE_TTL = 5 * 60 * 1000;
 
-// ═══════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════
-const S = {
-  league:null, rosters:[], users:{}, players:{},
-  fcMap:{}, proj:{},
-  transactions:[], tradedPicks:[],
-  nflState:null,
-  myRosterId:null, page:"dash",
-  tradeA:[], tradeB:[], tradeTarget:null,
-  fcLoaded:false, statsLoaded:false, txnLoaded:false,
-  histStats:{},   // pid -> {2022:{...}, 2023:{...}, 2024:{...}}
-  newsCache:{},
-  lineupRanks:[],
-};
+// ─── FETCH HELPERS ─────────────────────────────────────────────────────────────
+async function safeFetch(url, timeoutMs = 10000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
 
-// ═══════════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════════
-// Fetch with 10s timeout
-const jfetch = (url, ms=10000) => {
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), ms);
-  return fetch(url, {signal:controller.signal})
-    .then(r=>{ clearTimeout(timer); if(!r.ok) throw new Error(r.status); return r.json(); })
-    .catch(e=>{ clearTimeout(timer); throw e; });
-};
-const esc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const posClass = p => { const u=(p||"").toUpperCase().replace(/\d/g,""); return ["QB","RB","WR","TE","K","DEF","DL","LB","DB","IDL","EDGE"].includes(u)?u:"K"; };
-const fcVal = pid => S.fcMap[pid]?.value||0;
-const ownerName = r => { if(!r) return "?"; const u=S.users[r.owner_id]; return u?.metadata?.team_name||u?.display_name||u?.username||`Team ${r.roster_id}`; };
-const rPlayers = r => (r?.players||[]).map(pid=>({player_id:pid,...S.players[pid]}));
-const rosterById = id => S.rosters.find(r=>r.roster_id===parseInt(id));
-const playerName = pid => S.players[pid]?.full_name||pid;
+// ─── CACHE HELPERS ─────────────────────────────────────────────────────────────
+function cacheGet(key, ttl) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (Date.now() - d.ts > ttl) return null;
+    return d.data;
+  } catch { return null; }
+}
 
-function valBadge(val){
-  if(!val||val<1) return `<span class="vb vNA">—</span>`;
-  const c=val>8000?"vS":val>6000?"vA":val>3500?"vB":val>1500?"vC":"vD";
-  return `<span class="vb ${c}">${val.toLocaleString()}</span>`;
+function cacheSet(key, data) {
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); }
+  catch (e) { console.warn("Cache write failed:", e.message); }
 }
-function rankBadge(rank){
-  if(!rank||rank>500) return "";
-  const c=rank<=10?"vS":rank<=30?"vA":rank<=80?"vB":rank<=150?"vC":"vD";
-  return `<span class="vb ${c}">#${rank}</span>`;
-}
-function trendBadge(t){
-  if(!t||Math.abs(t)<5) return "";
-  return t>0?`<span class="trend-up">▲${t}</span>`:`<span class="trend-dn">▼${Math.abs(t)}</span>`;
-}
-function gradeOf(avg){
-  if(avg>8000) return{g:"A+",c:"vS"};if(avg>6000) return{g:"A",c:"vA"};
-  if(avg>3500) return{g:"B",c:"vB"};if(avg>1500) return{g:"C",c:"vC"};
-  return{g:"D",c:"vD"};
-}
-function showToast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
 
-// ═══════════════════════════════════════════════════════════
-// PPR CALC
-// ═══════════════════════════════════════════════════════════
-function calcPPR(s){
-  if(!s) return 0;
-  if(s.pts_ppr) return parseFloat(s.pts_ppr);
-  let p=0;
-  p+=(s.pass_yd||0)*.04; p+=(s.pass_td||0)*4; p-=(s.pass_int||0)*2;
-  p+=(s.rush_yd||0)*.1;  p+=(s.rush_td||0)*6;
-  p+=(s.rec||0)*1;       p+=(s.rec_yd||0)*.1; p+=(s.rec_td||0)*6;
-  p-=(s.fum_lost||0)*2;
+function cacheClear(key) {
+  try { localStorage.removeItem(key); } catch {}
+}
+
+// ─── PPR CALCULATOR ────────────────────────────────────────────────────────────
+function calcPPR(s) {
+  if (!s) return 0;
+  if (s.pts_ppr) return parseFloat(s.pts_ppr);
+  let p = 0;
+  p += (s.pass_yd || 0) * 0.04;
+  p += (s.pass_td || 0) * 4;
+  p -= (s.pass_int || 0) * 2;
+  p += (s.rush_yd || 0) * 0.1;
+  p += (s.rush_td || 0) * 6;
+  p += (s.rec || 0) * 1;
+  p += (s.rec_yd || 0) * 0.1;
+  p += (s.rec_td || 0) * 6;
+  p -= (s.fum_lost || 0) * 2;
   return parseFloat(p.toFixed(1));
 }
 
-// Season-level PPR from accumulated stats
-function seasonPPR(pid, season){
-  const s=S.histStats[pid]?.[season];
-  return s&&Object.keys(s).length ? calcPPR(s) : null;
-}
-// Get latest available season PPR
-function latestPPR(pid){
-  const h=S.histStats[pid];
-  if(!h) return null;
-  const seasons=Object.keys(h).sort((a,b)=>b-a);
-  for(const s of seasons){
-    const v=calcPPR(h[s]);
-    if(v>0) return {pts:v,season:s};
-  }
-  return null;
-}
-
-// ═══════════════════════════════════════════════════════════
-// OPTIMAL LINEUP VALUE
-// ═══════════════════════════════════════════════════════════
-function optimalLineupValue(roster){
-  const pl=rPlayers(roster);
-  const byPos={QB:[],RB:[],WR:[],TE:[]};
-  pl.forEach(p=>{ const pos=(p.position||"").toUpperCase(); if(byPos[pos]) byPos[pos].push({pid:p.player_id,val:fcVal(p.player_id)}); });
-  Object.values(byPos).forEach(a=>a.sort((a,b)=>b.val-a.val));
-  const qbs=byPos.QB.slice(0,2), rbs=byPos.RB.slice(0,2), wrs=byPos.WR.slice(0,3), tes=byPos.TE.slice(0,1);
-  const used=new Set([...qbs,...rbs,...wrs,...tes].map(p=>p.pid));
-  const flex=[...byPos.RB.slice(2),...byPos.WR.slice(3),...byPos.TE.slice(1)].filter(p=>!used.has(p.pid)).sort((a,b)=>b.val-a.val).slice(0,1);
-  return [...qbs,...rbs,...wrs,...tes,...flex].reduce((s,p)=>s+p.val,0);
+// ─── OPTIMAL LINEUP VALUE (SF: 2QB 2RB 3WR 1TE 1FLEX) ──────────────────────────
+function optimalLineupValue(rosterPlayers, fcMap) {
+  const byPos = { QB: [], RB: [], WR: [], TE: [] };
+  rosterPlayers.forEach(p => {
+    const pos = (p.position || "").toUpperCase();
+    if (byPos[pos]) byPos[pos].push({ pid: p.player_id, val: fcMap[p.player_id]?.value || 0 });
+  });
+  Object.values(byPos).forEach(a => a.sort((a, b) => b.val - a.val));
+  const qbs = byPos.QB.slice(0, 2);
+  const rbs = byPos.RB.slice(0, 2);
+  const wrs = byPos.WR.slice(0, 3);
+  const tes = byPos.TE.slice(0, 1);
+  const used = new Set([...qbs, ...rbs, ...wrs, ...tes].map(p => p.pid));
+  const flex = [...byPos.RB.slice(2), ...byPos.WR.slice(3), ...byPos.TE.slice(1)]
+    .filter(p => !used.has(p.pid)).sort((a, b) => b.val - a.val).slice(0, 1);
+  return [...qbs, ...rbs, ...wrs, ...tes, ...flex].reduce((s, p) => s + p.val, 0);
 }
 
-function computeLineupRanks(){
-  if(!S.fcLoaded||!S.rosters.length) return;
-  S.lineupRanks=[...S.rosters].map(r=>({
-    roster_id:r.roster_id, name:ownerName(r),
-    lineupVal:optimalLineupValue(r),
-    totalVal:rPlayers(r).reduce((s,p)=>s+fcVal(p.player_id),0),
-    wins:r.settings?.wins||0, losses:r.settings?.losses||0,
-  })).sort((a,b)=>b.lineupVal-a.lineupVal);
+// ─── OWNER NAME ────────────────────────────────────────────────────────────────
+function ownerName(roster, users) {
+  if (!roster) return "Unknown";
+  const u = users[roster.owner_id];
+  return u?.metadata?.team_name || u?.display_name || u?.username || `Team ${roster.roster_id}`;
 }
 
-// ═══════════════════════════════════════════════════════════
-// RULE-BASED TEAM ANALYSIS
-// ═══════════════════════════════════════════════════════════
-function buildTeamAnalysis(roster){
-  const pl=rPlayers(roster);
-  if(!pl.length||!S.fcLoaded) return null;
-  const byPos={QB:[],RB:[],WR:[],TE:[]};
-  pl.forEach(p=>{ const pos=(p.position||"").toUpperCase(); if(byPos[pos]) byPos[pos].push(p); });
-  Object.values(byPos).forEach(a=>a.sort((b,c)=>fcVal(c.player_id)-fcVal(b.player_id)));
-
-  const top10=[...pl].sort((a,b)=>fcVal(b.player_id)-fcVal(a.player_id)).slice(0,10);
-  const ages=top10.map(p=>p.age||(p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null)).filter(Boolean);
-  const avgAge=ages.length?ages.reduce((a,b)=>a+b,0)/ages.length:0;
-  const lineupVal=optimalLineupValue(roster);
-  const lrank=(S.lineupRanks.findIndex(r=>r.roster_id===roster.roster_id)+1)||0;
-  const totalVal=pl.reduce((s,p)=>s+fcVal(p.player_id),0);
-  const qb1=byPos.QB[0], qb2=byPos.QB[1];
-  const qbVal=(fcVal(qb1?.player_id)||0)+(fcVal(qb2?.player_id)||0);
-  const wrVal=byPos.WR.slice(0,3).reduce((s,p)=>s+fcVal(p.player_id),0);
-  const rbVal=byPos.RB.slice(0,2).reduce((s,p)=>s+fcVal(p.player_id),0);
-  const teVal=fcVal(byPos.TE[0]?.player_id)||0;
-  const netTrend=top10.reduce((s,p)=>s+(S.fcMap[p.player_id]?.trend30||0),0);
-
-  // Recent production (2024 PPR)
-  const top5prod=[...pl].sort((a,b)=>fcVal(b.player_id)-fcVal(a.player_id)).slice(0,5);
-  const avgProd2024=top5prod.map(p=>latestPPR(p.player_id)?.pts).filter(v=>v!=null);
-  const hasProd=avgProd2024.length>0;
-
-  // Determine mode
-  let mode, modeColor;
-  if(avgAge<24.5&&lineupVal<32000){mode="🔨 Full Rebuild";modeColor="var(--red)";}
-  else if(avgAge<25.5&&lineupVal<45000){mode="📈 Rebuilding";modeColor="var(--amber)";}
-  else if(avgAge>=27.5&&lineupVal>55000){mode="🏆 Win Now";modeColor="var(--purple)";}
-  else if(avgAge>=26&&lineupVal>45000){mode="⚡ Contender";modeColor="var(--accent)";}
-  else{mode="⚖️ Transitional";modeColor="var(--teal)";}
-
-  // Build paragraphs
-  const qbStr=qb1?`${qb1.full_name||"QB1"}${qb2?" & "+(qb2.full_name||"QB2"):""}`:null;
-  const wrStr=byPos.WR.slice(0,2).map(p=>p.full_name?.split(" ").pop()||"").filter(Boolean).join(" / ")||null;
-  const rbStr=byPos.RB.slice(0,2).map(p=>p.full_name?.split(" ").pop()||"").filter(Boolean).join(" / ")||null;
-
-  // Para 1: Outlook
-  let p1="";
-  if(mode.includes("Rebuild")){
-    p1=`This is a ${mode.toLowerCase().replace(/[🔨📈]/,"").trim()} team with an average core age of ${avgAge.toFixed(1)} years. Your starting lineup ranks #${lrank||"?"} in the league by FantasyCalc SF value (${lineupVal.toLocaleString()} total). The priority right now should be acquiring young talent and future draft capital rather than chasing marginal playoff spots.`;
-  } else if(mode.includes("Win Now")){
-    p1=`This is a win-now team. Your core averages ${avgAge.toFixed(1)} years old — the window is open but won't last forever. Starting lineup value ranks #${lrank||"?"} in the league (${lineupVal.toLocaleString()}). Every move you make should be optimizing for a championship in the next 1–2 seasons, not 3–5 years from now.`;
-  } else if(mode.includes("Contender")){
-    p1=`This is a legitimate contender. Core age of ${avgAge.toFixed(1)} with a starting lineup that ranks #${lrank||"?"} in the league (${lineupVal.toLocaleString()}). You have both a competitive window now and some long-term upside — a rare combination in dynasty.`;
-  } else {
-    p1=`This is a transitional roster with a ${avgAge.toFixed(1)}-year average core age and starting lineup value ranked #${lrank||"?"} in the league (${lineupVal.toLocaleString()}). You're neither clearly rebuilding nor clearly contending — the right move or two could tip things significantly in either direction.`;
-  }
-
-  // Para 2: Positional breakdown
-  let p2Parts=[];
-  if(qbStr) p2Parts.push(`QB room (${qbStr}, combined SF value: ${qbVal.toLocaleString()}) is your ${qbVal>14000?"biggest strength":"biggest need in superflex"}.`);
-  if(wrVal>18000) p2Parts.push(`WR corps is elite led by ${wrStr||"top receivers"}.`);
-  else if(wrVal<10000) p2Parts.push(`WR is thin (${wrVal.toLocaleString()} combined top-3) — a clear area to upgrade.`);
-  if(rbVal>12000) p2Parts.push(`RB depth is strong with ${rbStr||"a solid backfield"}.`);
-  else if(rbVal<6000) p2Parts.push(`RB corps is a weakness — consider targeting a bellcow.`);
-  if(teVal>6000) p2Parts.push(`Elite TE (${byPos.TE[0]?.full_name||""}) gives a positional advantage.`);
-  else if(teVal<2000) p2Parts.push(`TE is a streaming spot — not a dynasty concern but worth monitoring.`);
-  const p2=p2Parts.join(" ")||"Positional breakdown looks balanced across the roster.";
-
-  // Para 3: Trend & recommendation
-  let p3="";
-  if(netTrend>500) p3=`Your top assets are trending up collectively (+${netTrend} over 30 days on FantasyCalc), suggesting the league is bullish on your core. `;
-  else if(netTrend<-500) p3=`Your top assets have lost value recently (${netTrend} combined 30-day trend) — worth monitoring whether this is a temporary dip or a structural concern. `;
-
-  // Recommend biggest move
-  if(mode.includes("Win Now")||mode.includes("Contender")){
-    if(qbVal<10000) p3+=`Priority move: upgrade your QB room. In superflex, elite QBs are worth overpaying for.`;
-    else if(wrVal<14000) p3+=`Priority move: add a WR1-caliber weapon — your passing game support needs a boost.`;
-    else p3+=`You're well-built. Look to add depth at RB or trade future picks for proven contributors.`;
-  } else {
-    p3+=`Focus on acquiring 2026–2027 draft picks and targeting players on the age curve (22–24) that contenders might move for production.`;
-  }
-
-  // Strengths / concerns
-  const strengths=[], concerns=[];
-  if(qbVal>14000) strengths.push(`Elite QB room`);
-  else if(qbVal<6000) concerns.push(`Weak QB room`);
-  if(wrVal>18000) strengths.push(`Deep WR corps`);
-  else if(wrVal<9000) concerns.push(`Thin at WR`);
-  if(rbVal>12000) strengths.push(`Strong RB depth`);
-  else if(rbVal<5000) concerns.push(`RB is a weakness`);
-  if(teVal>6000) strengths.push(`Elite TE advantage`);
-  if(netTrend>400) strengths.push(`Assets trending ▲`);
-  if(netTrend<-400) concerns.push(`Assets trending ▼`);
-  if(byPos.QB.length<2) concerns.push(`Only 1 QB — risky`);
-  if(lrank<=3) strengths.push(`Top-3 lineup power`);
-  if(lrank>=10) concerns.push(`Bottom-3 lineup power`);
-
-  return {mode,modeColor,p1,p2,p3,strengths,concerns,avgAge:avgAge.toFixed(1),lineupVal,lrank,totalVal,netTrend,qbVal};
+// ─── GRADE ─────────────────────────────────────────────────────────────────────
+function gradeOf(avg) {
+  if (avg > 8000) return { g: "A+", cls: "grade-s" };
+  if (avg > 6000) return { g: "A",  cls: "grade-a" };
+  if (avg > 3500) return { g: "B",  cls: "grade-b" };
+  if (avg > 1500) return { g: "C",  cls: "grade-c" };
+  return { g: "D", cls: "grade-d" };
 }
 
-// ═══════════════════════════════════════════════════════════
-// RULE-BASED PLAYER SCOUTING
-// ═══════════════════════════════════════════════════════════
-function buildScoutReport(pid){
-  const p=S.players[pid];
-  if(!p) return null;
-  const fc=S.fcMap[pid];
-  const pos=(p.position||"").toUpperCase();
-  const age=p.age||(p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null)||0;
-  const yoe=p.years_exp!=null?parseInt(p.years_exp):null;
-  const val=fc?.value||0;
-  const rank=fc?.rank||9999;
-  const trend=fc?.trend30||0;
-
-  // Historical PPR - use all available career seasons
-  const careerH=S.histStats[pid]||{};
-  const sortedSeasons=Object.keys(careerH).sort((a,b)=>b-a);
-  const latestSeason=sortedSeasons[0];
-  const prevSeason=sortedSeasons[1];
-  const latestPPR=latestSeason?seasonPPR(pid,latestSeason):null;
-  const prevPPR=prevSeason?seasonPPR(pid,prevSeason):null;
-  const hasHistory=sortedSeasons.length>0;
-
-  // Production trajectory
-  let prodTrend="stable";
-  if(latestPPR!==null&&prevPPR!==null){
-    const delta=latestPPR-prevPPR;
-    if(delta>30) prodTrend="rising";
-    else if(delta<-30) prodTrend="declining";
-  }
-
-  // Age curve analysis
-  const ageCurves={QB:{peak:[27,34],prime:[25,35]},RB:{peak:[23,26],prime:[22,28]},WR:{peak:[24,29],prime:[22,31]},TE:{peak:[26,30],prime:[24,32]}};
-  const curve=ageCurves[pos]||ageCurves.WR;
-  const inPeak=age>=curve.peak[0]&&age<=curve.peak[1];
-  const inPrime=age>=curve.prime[0]&&age<=curve.prime[1];
-  const prePeak=age<curve.peak[0];
-  const postPeak=age>curve.peak[1];
-
-  // Build verdict
-  let verdict, verdictClass;
-  if(val===0||rank>400){
-    verdict="HOLD"; verdictClass="hold";
-  } else if(prePeak&&val>2000&&trend>=0){
-    verdict="BUY"; verdictClass="buy";
-  } else if(postPeak&&prodTrend==="declining"&&age>30){
-    verdict="SELL"; verdictClass="sell";
-  } else if(prodTrend==="rising"&&val>2000){
-    verdict="BUY"; verdictClass="buy";
-  } else if(trend<-200&&postPeak){
-    verdict="SELL"; verdictClass="sell";
-  } else {
-    verdict="HOLD"; verdictClass="hold";
-  }
-
-  // Para 1: Current situation
-  let s1="";
-  if(val>6000) s1=`${p.full_name} is an elite dynasty asset ranked #${rank} overall (SF value: ${val.toLocaleString()}). `;
-  else if(val>3000) s1=`${p.full_name} is a solid dynasty contributor ranked #${rank} overall (SF value: ${val.toLocaleString()}). `;
-  else if(val>0) s1=`${p.full_name} has modest dynasty value at #${rank} overall (SF value: ${val.toLocaleString()}). `;
-  else s1=`${p.full_name} is currently unranked or outside the top-500 on FantasyCalc. `;
-
-  if(hasHistory){
-    const parts=[];
-    if(sortedSeasons.includes("2022")) parts.push(`2022: ${seasonPPR(pid,"2022").toFixed(0)} pts`);
-    if(sortedSeasons.includes("2023")) parts.push(`2023: ${seasonPPR(pid,"2023").toFixed(0)} pts`);
-    if(sortedSeasons.includes("2024")) parts.push(`2024: ${seasonPPR(pid,"2024").toFixed(0)} pts`);
-    s1+=`Season PPR totals — ${parts.join(", ")}. `;
-    if(prodTrend==="rising") s1+=`Production is trending upward, a positive dynasty signal.`;
-    else if(prodTrend==="declining") s1+=`Production has declined recently, which is worth monitoring.`;
-    else s1+=`Production has been relatively consistent.`;
-  }
-
-  // Para 2: Age curve
-  let s2="";
-  const yrsToPeak=Math.max(0,curve.peak[0]-age);
-  if(prePeak){
-    s2=`At ${age} years old, ${p.full_name?.split(" ")[0]} is ${yrsToPeak>0?`still ${yrsToPeak} year${yrsToPeak>1?"s":""} away from their peak window (${curve.peak[0]}–${curve.peak[1]})`:` just entering their peak window`}. This is the ideal dynasty age — you can expect improvement as they mature. `;
-    if(yoe!==null&&yoe<=1) s2+=`As a player with only ${yoe===0?"no NFL experience yet":"1 year of NFL experience"}, upside is high but development is not guaranteed.`;
-    else s2+=`The best years should still be ahead.`;
-  } else if(inPeak){
-    s2=`At ${age}, ${p.full_name?.split(" ")[0]} is right in their peak window (${curve.peak[0]}–${curve.peak[1]} for ${pos}). What you see is what you get — this is the prime of their dynasty value, and it will hold for a few more seasons.`;
-  } else {
-    const yrsPost=age-curve.peak[1];
-    s2=`At ${age}, ${p.full_name?.split(" ")[0]} is ${yrsPost} year${yrsPost>1?"s":""} past the typical ${pos} peak (${curve.peak[0]}–${curve.peak[1]}). `;
-    s2+=age>32?`Age-related decline is a real risk, and dynasty value will likely continue to erode. Sell windows are typically better than hold windows at this stage.`:`There may be 1–2 more productive seasons, but the long-term dynasty outlook dims each year.`;
-  }
-
-  // Para 3: Verdict
-  let s3="";
-  if(verdict==="BUY"){
-    s3=`Verdict: BUY. `;
-    if(prePeak) s3+=`Young age curve + strong value makes this an ideal target. If you can acquire them at or near current market value, you're getting a player who should be worth more in 12–18 months.`;
-    else s3+=`Rising production and positive trend suggest the market may be undervaluing this player. A good time to acquire.`;
-  } else if(verdict==="SELL"){
-    s3=`Verdict: SELL. `;
-    s3+=`The combination of age, declining production, and negative trends suggests the best value-maximizing move is to sell for a younger player or draft capital. Don't let dynasty nostalgia hold you back.`;
-  } else {
-    s3=`Verdict: HOLD. `;
-    if(inPeak) s3+=`In their peak window with stable value — not a sell unless you're getting an elite return. Not a buy unless at a discount.`;
-    else s3+=`No compelling reason to move in either direction. Monitor their situation and revisit if circumstances change.`;
-  }
-
-  if(Math.abs(trend)>=50){
-    s3+=` Note: 30-day FC trend is ${trend>0?`+${trend} (rising)`:`${trend} (falling)`}.`;
-  }
-
-  return {verdict,verdictClass,s1,s2,s3,ppr22,ppr23,ppr24,prodTrend,age,inPeak,prePeak,postPeak};
+// ─── TEAM MODE CLASSIFIER ──────────────────────────────────────────────────────
+function classifyTeam(rosterPlayers, fcMap) {
+  if (!rosterPlayers.length) return "Unknown";
+  const top10 = [...rosterPlayers].sort((a, b) => (fcMap[b.player_id]?.value || 0) - (fcMap[a.player_id]?.value || 0)).slice(0, 10);
+  const ages = top10.map(p => p.age || (p.birth_date ? Math.floor((Date.now() - new Date(p.birth_date)) / 31557600000) : null)).filter(Boolean);
+  const avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0;
+  const lineupVal = optimalLineupValue(rosterPlayers, fcMap);
+  if (avgAge < 24.5 && lineupVal < 32000) return "Rebuilding";
+  if (avgAge < 25.5 && lineupVal < 45000) return "Rebuilding";
+  if (avgAge >= 27.5 && lineupVal > 55000) return "Win Now";
+  if (avgAge >= 26 && lineupVal > 45000) return "Contender";
+  return "Transitional";
 }
 
-// ═══════════════════════════════════════════════════════════
-// BOOT
-// ═══════════════════════════════════════════════════════════
-// ── CACHE ────────────────────────────────────────────────
-const CKEY = "dhq2_"+LEAGUE_ID;
-function saveCache(d){ try{ localStorage.setItem(CKEY,JSON.stringify({ts:Date.now(),...d})); }catch(_){} }
-function loadCache(){ try{ const r=JSON.parse(localStorage.getItem(CKEY)||"null"); return r&&(Date.now()-r.ts<300000)?r:null; }catch(_){return null;} }
+// ─── TRADE SUGGESTIONS ENGINE ──────────────────────────────────────────────────
+function generateTradeSuggestions(myRoster, myPlayers, allRosters, allPlayers, fcMap, histStats, users) {
+  const myMode = classifyTeam(myPlayers, fcMap);
+  const myLineupVal = optimalLineupValue(myPlayers, fcMap);
 
+  // Positional needs scoring
+  const myByPos = {};
+  myPlayers.forEach(p => {
+    const pos = (p.position || "").toUpperCase();
+    myByPos[pos] = (myByPos[pos] || 0) + 1;
+  });
 
-function applyLeagueToUI(){
-  document.getElementById("ltitle").textContent=S.league?.name||"Dynasty HQ";
-  document.getElementById("lsub").textContent=`12-team · Superflex · PPR`;
-  const sel=document.getElementById("tsel");
-  sel.innerHTML="";
-  S.rosters.forEach(r=>{ const o=document.createElement("option"); o.value=r.roster_id; o.textContent=ownerName(r); sel.appendChild(o); });
-}
+  const suggestions = [];
 
-async function boot(){
-  // Show app instantly — no loading screen
-  render();
+  allRosters.forEach(theirRoster => {
+    if (theirRoster.roster_id === myRoster.roster_id) return;
+    const theirPlayers = (theirRoster.players || []).map(pid => ({ player_id: pid, ...allPlayers[pid] })).filter(p => p.full_name);
+    if (!theirPlayers.length) return;
+    const theirMode = classifyTeam(theirPlayers, fcMap);
+    const theirName = ownerName(theirRoster, users);
 
-  // Try cache first for instant data
-  const cached=loadCache();
-  if(cached){
-    S.league=cached.league; S.rosters=cached.rosters||[]; S.users=cached.users||{};
-    S.myRosterId=S.rosters[0]?.roster_id;
-    applyLeagueToUI();
-    render();
-  }
+    // Find players I could send (my lower-value players at positions they need)
+    const theirByPos = {};
+    theirPlayers.forEach(p => { const pos = (p.position || "").toUpperCase(); theirByPos[pos] = (theirByPos[pos] || 0) + 1; });
 
-  // Fetch league data (small, fast) — 6s timeout each
-  const safe = (p) => p.catch(()=>null);
-  const [lg,rs,uArr] = await Promise.all([
-    safe(jfetch(`${SLP}/league/${LEAGUE_ID}`,6000)),
-    safe(jfetch(`${SLP}/league/${LEAGUE_ID}/rosters`,6000)),
-    safe(jfetch(`${SLP}/league/${LEAGUE_ID}/users`,6000)),
-  ]);
+    // Generate 1-for-1 trade ideas
+    const mySorted = [...myPlayers].sort((a, b) => (fcMap[b.player_id]?.value || 0) - (fcMap[a.player_id]?.value || 0));
+    const theirSorted = [...theirPlayers].sort((a, b) => (fcMap[b.player_id]?.value || 0) - (fcMap[a.player_id]?.value || 0));
 
-  if(lg&&rs&&uArr){
-    S.league=lg; S.rosters=rs;
-    const uMap={}; uArr.forEach(u=>{ uMap[u.user_id]=u; }); S.users=uMap;
-    S.myRosterId=rs[0]?.roster_id;
-    saveCache({league:lg,rosters:rs,users:S.users});
-    applyLeagueToUI();
-    render();
-  } else if(!cached){
-    // Show error inline on the dash
-    document.getElementById("ltitle").textContent="Connection error";
-    document.getElementById("lsub").textContent="Tap here to retry";
-    document.getElementById("ltitle").parentElement.style.cursor="pointer";
-    document.getElementById("ltitle").parentElement.onclick=()=>location.reload();
-    return;
-  }
+    // Look for value-upgrading trades (I give less FC, they give more)
+    for (let i = 3; i < Math.min(mySorted.length, 15); i++) {
+      const send = mySorted[i];
+      const sendVal = fcMap[send.player_id]?.value || 0;
+      if (sendVal < 500) continue;
 
-  // Background: FC values (fast, ~200KB)
-  loadFC();
+      for (let j = 0; j < Math.min(theirSorted.length, 12); j++) {
+        const recv = theirSorted[j];
+        const recvVal = fcMap[recv.player_id]?.value || 0;
+        if (recvVal < 500) continue;
 
-  // Background: fetch ONLY rostered player details (Option 4)
-  // Instead of 8MB full DB, fetch only the ~200 players actually on rosters
-  setTimeout(()=>loadRosteredPlayers(), 200);
+        // Skip if same player somehow
+        if (send.player_id === recv.player_id) continue;
 
-  // Background: projections + transactions (lowest priority)
-  setTimeout(()=>{
-    jfetch(`${SLP}/state/nfl`,10000).then(nfl=>{ S.nflState=nfl; loadCurrentProj(nfl); }).catch(()=>{});
-    loadTxns();
-    jfetch(`${SLP}/league/${LEAGUE_ID}/traded_picks`,8000).then(d=>{ S.tradedPicks=d; render(); }).catch(()=>{});
-  }, 1500);
-}
+        const fcDelta = recvVal - sendVal;
+        // Only suggest if reasonably close in value (within 30%) OR I'm getting more
+        if (Math.abs(fcDelta) > sendVal * 0.5) continue;
 
+        // Positional fit: does receiving this player help me?
+        const recvPos = (recv.position || "").toUpperCase();
+        const sendPos = (send.position || "").toUpperCase();
 
-async function loadFC(){
-  try{
-    const data=await jfetch(FC_URL);
-    const map={};
-    data.forEach(item=>{ const pid=item.player?.sleeperId; if(pid) map[pid]={value:item.value||0,rank:item.overallRank||9999,posRank:item.positionRank||9999,trend30:item.trend30Day||0}; });
-    S.fcMap=map; S.fcLoaded=true;
-    computeLineupRanks();
-    render();
-  }catch(e){ console.warn("FC",e); }
-}
+        // Mode compatibility scoring
+        let fitScore = 50;
 
-async function loadCurrentProj(nfl){
-  try{
-    const wk=Math.min(nfl.week||1,18);
-    const proj=await fetch(`${SLP2}/projections/nfl/2024/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE`).then(r=>r.ok?r.json():{});
-    S.proj=proj||{}; render();
-  }catch(e){ console.warn("Proj",e); }
-}
+        // Rebuilding teams want youth and picks
+        const recvAge = recv.age || 25;
+        const sendAge = send.age || 25;
 
-// Player display name cache (built from individual fetches)
-// No pre-bundle — all data comes from Sleeper /players/nfl/{pid}
+        if (theirMode === "Rebuilding" || theirMode === "Transitional") {
+          // They want: older proven players, we want: younger upside
+          if (sendAge > recvAge + 2) fitScore += 20;
+          if (recvAge < 25) fitScore += 15;
+        }
+        if (theirMode === "Win Now" || theirMode === "Contender") {
+          // They want: proven vets, we have: youth
+          if (sendAge < recvAge) fitScore += 15;
+          if (recvVal > sendVal) fitScore += 10;
+        }
 
+        // Positional need bonus
+        const myNeedPos = myByPos[recvPos] < 3 ? 10 : 0;
+        fitScore += myNeedPos;
 
-// ── Load all NFL players — localStorage cache for instant repeat loads ──
-function clearPlayersCache(){
-  try{ localStorage.removeItem(PLAYERS_CACHE_KEY); }catch(_){}
-  S.players={};
-  render();
-  fetchAndCachePlayers(true);
-}
+        // Projection delta (use latest season PPR)
+        const getLatestPts = (pid) => {
+          const h = histStats[pid];
+          if (!h) return 0;
+          const seasons = Object.keys(h).sort((a, b) => b - a);
+          for (const s of seasons) {
+            const v = calcPPR(h[s]);
+            if (v > 0) return v;
+          }
+          return 0;
+        };
+        const projDelta = Math.round(getLatestPts(recv.player_id) - getLatestPts(send.player_id));
 
-const PLAYERS_CACHE_KEY = "dhq_players_v1";
-const PLAYERS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-
-async function loadRosteredPlayers(){
-  // Step 1: Try localStorage cache first
-  try{
-    const raw = localStorage.getItem(PLAYERS_CACHE_KEY);
-    if(raw){
-      const cached = JSON.parse(raw);
-      if(Date.now() - cached.ts < PLAYERS_CACHE_TTL && cached.data){
-        S.players = cached.data;
-        render();
-        loadHistStats();
-        // Refresh cache in background if older than 12 hours
-        if(Date.now() - cached.ts > 12*60*60*1000) fetchAndCachePlayers(false);
-        return;
+        if (fitScore >= 50) {
+          suggestions.push({
+            id: `${theirRoster.roster_id}-${send.player_id}-${recv.player_id}`,
+            theirRosterId: theirRoster.roster_id,
+            theirName,
+            theirMode,
+            fitScore,
+            send: [{ ...send, value: sendVal }],
+            receive: [{ ...recv, value: recvVal }],
+            fcDelta,
+            projDelta,
+            explanation: buildTradeExplanation(send, recv, sendVal, recvVal, theirMode, myMode, projDelta, fitScore),
+          });
+        }
       }
     }
-  }catch(_){}
+  });
 
-  // Step 2: No cache — fetch the full players DB
-  await fetchAndCachePlayers(true);
+  // Sort by fit score desc, deduplicate by their team (max 2 per team)
+  const teamCounts = {};
+  return suggestions
+    .sort((a, b) => b.fitScore - a.fitScore)
+    .filter(s => {
+      teamCounts[s.theirRosterId] = (teamCounts[s.theirRosterId] || 0) + 1;
+      return teamCounts[s.theirRosterId] <= 2;
+    })
+    .slice(0, 10);
 }
 
-async function fetchAndCachePlayers(renderAfter){
-  try{
-    const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 30000); // 30s timeout
-    const r = await fetch(`${SLP}/players/nfl`, {signal:ctrl.signal});
-    clearTimeout(timer);
-    if(!r.ok) throw new Error(r.status);
-    const data = await r.json();
-    S.players = data;
+function buildTradeExplanation(send, recv, sendVal, recvVal, theirMode, myMode, projDelta, fitScore) {
+  const sendName = send.full_name?.split(" ").pop() || send.full_name || "";
+  const recvName = recv.full_name?.split(" ").pop() || recv.full_name || "";
+  const sendAge = send.age || "?";
+  const recvAge = recv.age || "?";
+  let parts = [];
 
-    // Try to save to localStorage (may fail if storage full)
-    try{
-      // Only store the fields we actually need to keep it lean
+  if (theirMode === "Rebuilding" || theirMode === "Transitional") {
+    parts.push(`${theirMode.toLowerCase()} team happy to acquire ${sendName} (${sendAge}) for upside`);
+  } else {
+    parts.push(`${theirMode.toLowerCase()} team wants proven contributors`);
+  }
+
+  if (recvVal > sendVal) {
+    parts.push(`you upgrade value by ${(recvVal - sendVal).toLocaleString()}`);
+  } else if (sendVal > recvVal) {
+    parts.push(`you trade down ${(sendVal - recvVal).toLocaleString()} in value but gain ${recvAge < sendAge ? "age curve" : "positional fit"}`);
+  }
+
+  if (projDelta > 50) parts.push(`projection favors you by ${projDelta}`);
+  else if (projDelta < -50) parts.push(`they get better recent production`);
+
+  return parts.map((p, i) => i === 0 ? p.charAt(0).toUpperCase() + p.slice(1) : p).join("; ") + ".";
+}
+
+// ─── TEAM ANALYSIS ENGINE ──────────────────────────────────────────────────────
+function buildTeamAnalysis(rosterPlayers, fcMap, lineupRanks, rosterId) {
+  if (!rosterPlayers.length || !Object.keys(fcMap).length) return null;
+
+  const byPos = { QB: [], RB: [], WR: [], TE: [] };
+  rosterPlayers.forEach(p => {
+    const pos = (p.position || "").toUpperCase();
+    if (byPos[pos]) byPos[pos].push(p);
+  });
+  Object.values(byPos).forEach(a => a.sort((x, y) => (fcMap[y.player_id]?.value || 0) - (fcMap[x.player_id]?.value || 0)));
+
+  const top10 = [...rosterPlayers].sort((a, b) => (fcMap[b.player_id]?.value || 0) - (fcMap[a.player_id]?.value || 0)).slice(0, 10);
+  const ages = top10.map(p => p.age || (p.birth_date ? Math.floor((Date.now() - new Date(p.birth_date)) / 31557600000) : null)).filter(Boolean);
+  const avgAge = ages.length ? (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) : "?";
+  const lineupVal = optimalLineupValue(rosterPlayers, fcMap);
+  const lrank = (lineupRanks.findIndex(r => r.roster_id === rosterId) + 1) || "?";
+  const qbVal = (byPos.QB[0] ? fcMap[byPos.QB[0].player_id]?.value || 0 : 0) + (byPos.QB[1] ? fcMap[byPos.QB[1].player_id]?.value || 0 : 0);
+  const wrVal = byPos.WR.slice(0, 3).reduce((s, p) => s + (fcMap[p.player_id]?.value || 0), 0);
+  const rbVal = byPos.RB.slice(0, 2).reduce((s, p) => s + (fcMap[p.player_id]?.value || 0), 0);
+  const netTrend = top10.reduce((s, p) => s + (fcMap[p.player_id]?.trend30 || 0), 0);
+
+  let mode, modeColor;
+  const lv = lineupVal;
+  const aa = parseFloat(avgAge);
+  if (aa < 24.5 && lv < 32000) { mode = "Full Rebuild"; modeColor = "#f25c54"; }
+  else if (aa < 25.5 && lv < 45000) { mode = "Rebuilding"; modeColor = "#f6a623"; }
+  else if (aa >= 27.5 && lv > 55000) { mode = "Win Now"; modeColor = "#a78bfa"; }
+  else if (aa >= 26 && lv > 45000) { mode = "Contender"; modeColor = "#4f8ef7"; }
+  else { mode = "Transitional"; modeColor = "#2dd4bf"; }
+
+  const qb1 = byPos.QB[0], qb2 = byPos.QB[1];
+  const qbStr = [qb1, qb2].filter(Boolean).map(p => p.full_name?.split(" ").pop() || "").join(" & ");
+  const wrStr = byPos.WR.slice(0, 2).map(p => p.full_name?.split(" ").pop() || "").join(" / ");
+  const rbStr = byPos.RB.slice(0, 2).map(p => p.full_name?.split(" ").pop() || "").join(" / ");
+
+  const p1 = mode === "Contender"
+    ? `This is a legitimate contender. Core age of ${avgAge} with a starting lineup that ranks #${lrank} in the league (${lineupVal.toLocaleString()}). You have both a competitive window now and some long-term upside — a rare combination in dynasty.`
+    : mode === "Win Now"
+    ? `This is a win-now team. Core averages ${avgAge} years old — the window is open. Starting lineup ranks #${lrank} in the league (${lineupVal.toLocaleString()}). Every move should optimize for a championship in the next 1–2 seasons.`
+    : mode.includes("Rebuild")
+    ? `This is a ${mode.toLowerCase()} team with a ${avgAge}-year average core age. Starting lineup ranks #${lrank} in the league (${lineupVal.toLocaleString()}). The priority is acquiring young talent and future draft capital.`
+    : `Transitional roster. Core age of ${avgAge}, starting lineup ranks #${lrank} (${lineupVal.toLocaleString()}). The right move could tip things in either direction.`;
+
+  const p2parts = [];
+  if (qbStr) p2parts.push(`QB room (${qbStr}, combined SF value: ${qbVal.toLocaleString()}) is your ${qbVal > 14000 ? "biggest strength" : "biggest need in superflex"}.`);
+  if (wrVal > 18000) p2parts.push(`WR corps is elite led by ${wrStr}.`);
+  else if (wrVal < 10000) p2parts.push(`WR is thin — a clear area to upgrade.`);
+  if (rbVal > 12000) p2parts.push(`RB depth is strong with ${rbStr}.`);
+  else if (rbVal < 6000) p2parts.push(`RB corps is a weakness.`);
+  const p2 = p2parts.join(" ") || "Positional breakdown looks balanced.";
+
+  let p3 = netTrend > 500 ? `Top assets are trending up collectively (+${netTrend} 30-day). ` : netTrend < -500 ? `Top assets have lost value recently (${netTrend} combined 30-day trend) — worth monitoring. ` : "";
+  if (mode === "Win Now" || mode === "Contender") {
+    p3 += qbVal < 10000 ? "Priority move: upgrade your QB room. In superflex, elite QBs are worth overpaying for." : wrVal < 14000 ? "Priority move: add a WR1-caliber weapon." : "You're well-built. Look to add depth or trade future picks for proven contributors.";
+  } else {
+    p3 += "Focus on acquiring 2026–2027 draft picks and targeting players on the age curve (22–24).";
+  }
+
+  const strengths = [], concerns = [];
+  if (qbVal > 14000) strengths.push("Elite QB room");
+  else if (qbVal < 6000) concerns.push("Weak QB room");
+  if (wrVal > 18000) strengths.push("Deep WR corps");
+  else if (wrVal < 9000) concerns.push("Thin at WR");
+  if (rbVal > 12000) strengths.push("Strong RB depth");
+  else if (rbVal < 5000) concerns.push("RB weakness");
+  if (netTrend > 400) strengths.push("Assets trending ▲");
+  if (netTrend < -400) concerns.push("Assets trending ▼");
+  if (lrank !== "?" && lrank <= 3) strengths.push(`Top-${lrank} lineup power`);
+  if (lrank !== "?" && lrank >= 10) concerns.push("Bottom-3 lineup power");
+
+  return { mode, modeColor, p1, p2, p3, strengths, concerns, avgAge, lineupVal, lrank, netTrend, qbVal };
+}
+
+// ─── SCOUTING REPORT ───────────────────────────────────────────────────────────
+function buildScoutReport(pid, players, fcMap, histStats) {
+  const p = players[pid];
+  if (!p) return null;
+  const fc = fcMap[pid];
+  const pos = (p.position || "").toUpperCase();
+  const age = p.age || (p.birth_date ? Math.floor((Date.now() - new Date(p.birth_date)) / 31557600000) : null) || 0;
+  const val = fc?.value || 0;
+  const rank = fc?.rank || 9999;
+  const trend = fc?.trend30 || 0;
+
+  const careerH = histStats[pid] || {};
+  const sortedSeasons = Object.keys(careerH).sort((a, b) => b - a);
+  const latestSeason = sortedSeasons[0];
+  const prevSeason = sortedSeasons[1];
+  const latestPPR = latestSeason ? calcPPR(careerH[latestSeason]) : null;
+  const prevPPR = prevSeason ? calcPPR(careerH[prevSeason]) : null;
+
+  let prodTrend = "stable";
+  if (latestPPR !== null && prevPPR !== null) {
+    if (latestPPR - prevPPR > 30) prodTrend = "rising";
+    else if (latestPPR - prevPPR < -30) prodTrend = "declining";
+  }
+
+  const ageCurves = { QB: { peak: [27, 34] }, RB: { peak: [23, 26] }, WR: { peak: [24, 29] }, TE: { peak: [26, 30] } };
+  const curve = ageCurves[pos] || ageCurves.WR;
+  const inPeak = age >= curve.peak[0] && age <= curve.peak[1];
+  const prePeak = age < curve.peak[0];
+  const postPeak = age > curve.peak[1];
+
+  let verdict, verdictColor;
+  if (prePeak && val > 2000 && trend >= 0) { verdict = "BUY"; verdictColor = "#3ecf8e"; }
+  else if (postPeak && prodTrend === "declining" && age > 30) { verdict = "SELL"; verdictColor = "#f25c54"; }
+  else if (prodTrend === "rising" && val > 2000) { verdict = "BUY"; verdictColor = "#3ecf8e"; }
+  else if (trend < -200 && postPeak) { verdict = "SELL"; verdictColor = "#f25c54"; }
+  else { verdict = "HOLD"; verdictColor = "#f6a623"; }
+
+  let s1 = val > 6000 ? `${p.full_name} is an elite dynasty asset ranked #${rank} overall (SF value: ${val.toLocaleString()}). ` :
+            val > 3000 ? `${p.full_name} is a solid dynasty contributor ranked #${rank} overall (SF value: ${val.toLocaleString()}). ` :
+            val > 0 ? `${p.full_name} has modest dynasty value at #${rank} overall (SF value: ${val.toLocaleString()}). ` :
+            `${p.full_name} is currently unranked on FantasyCalc. `;
+
+  if (sortedSeasons.length) {
+    const pts = sortedSeasons.slice(0, 3).map(yr => `${yr}: ${calcPPR(careerH[yr]).toFixed(0)} pts`).join(", ");
+    s1 += `Season PPR totals — ${pts}. `;
+    s1 += prodTrend === "rising" ? "Production is trending upward." : prodTrend === "declining" ? "Production has declined recently." : "Production has been relatively consistent.";
+  }
+
+  const firstName = p.full_name?.split(" ")[0] || p.full_name || "";
+  let s2 = prePeak
+    ? `At ${age}, ${firstName} is ${curve.peak[0] - age > 0 ? `${curve.peak[0] - age} year${curve.peak[0] - age > 1 ? "s" : ""} away from their peak window (${curve.peak[0]}–${curve.peak[1]} for ${pos})` : "just entering their peak window"}. The best years should still be ahead.`
+    : inPeak ? `At ${age}, ${firstName} is right in their peak window (${curve.peak[0]}–${curve.peak[1]} for ${pos}). What you see is what you get — this is the prime of their dynasty value.`
+    : `At ${age}, ${firstName} is ${age - curve.peak[1]} year${age - curve.peak[1] > 1 ? "s" : ""} past the typical ${pos} peak. ${age > 32 ? "Age-related decline is a real risk." : "There may be 1–2 more productive seasons."}`;
+
+  let s3 = verdict === "BUY" ? `Verdict: BUY. ${prePeak ? "Young age curve + strong value makes this an ideal target." : "Rising production suggests the market may be undervaluing this player."}`
+         : verdict === "SELL" ? "Verdict: SELL. Age, declining production, and negative trends suggest selling for younger talent or picks is the value-maximizing move."
+         : `Verdict: HOLD. ${inPeak ? "In their peak window with stable value — not a sell unless you're getting an elite return." : "No compelling reason to move in either direction."}`;
+  if (Math.abs(trend) >= 50) s3 += ` Note: 30-day FC trend is ${trend > 0 ? `+${trend} (rising)` : `${trend} (falling)`}.`;
+
+  return { verdict, verdictColor, s1, s2, s3, prodTrend, age, inPeak, prePeak };
+}
+
+
+// ═══════════ ui ═══════════
+// ── Position badge ────────────────────────────────────────────────────────────
+const POS_COLORS = {
+  QB: { bg: "rgba(242,92,84,.15)", color: "#f25c54" },
+  RB: { bg: "rgba(62,207,142,.15)", color: "#3ecf8e" },
+  WR: { bg: "rgba(79,142,247,.15)", color: "#4f8ef7" },
+  TE: { bg: "rgba(246,166,35,.15)", color: "#f6a623" },
+  K:  { bg: "rgba(136,145,164,.13)", color: "#8891a4" },
+  DEF:{ bg: "rgba(136,145,164,.13)", color: "#8891a4" },
+  default: { bg: "rgba(136,145,164,.13)", color: "#8891a4" },
+};
+
+function PosBadge({ pos, size = 11, style = {} }) {
+  const p = (pos || "").toUpperCase().replace(/\d/g, "");
+  const colors = POS_COLORS[p] || POS_COLORS.default;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      fontSize: size, fontWeight: 700, fontFamily: "'DM Mono', monospace",
+      padding: "2px 5px", borderRadius: 4, minWidth: 28, textAlign: "center",
+      background: colors.bg, color: colors.color, flexShrink: 0, ...style,
+    }}>{p || "?"}</span>
+  );
+}
+
+// ── Value badge ───────────────────────────────────────────────────────────────
+function ValBadge({ val, style = {} }) {
+  if (!val || val < 1) return <span style={{ color: "var(--text3)", fontSize: 12, ...style }}>—</span>;
+  const cls = val > 8000 ? { bg: "rgba(167,139,250,.15)", color: "#a78bfa" }
+    : val > 6000 ? { bg: "rgba(79,142,247,.15)", color: "#4f8ef7" }
+    : val > 3500 ? { bg: "rgba(62,207,142,.15)", color: "#3ecf8e" }
+    : val > 1500 ? { bg: "rgba(246,166,35,.15)", color: "#f6a623" }
+    : { bg: "rgba(242,92,84,.15)", color: "#f25c54" };
+  return (
+    <span style={{
+      fontSize: 11, fontWeight: 600, fontFamily: "'DM Mono', monospace",
+      padding: "2px 6px", borderRadius: 4, flexShrink: 0,
+      background: cls.bg, color: cls.color, whiteSpace: "nowrap", ...style,
+    }}>{val.toLocaleString()}</span>
+  );
+}
+
+// ── Rank badge ────────────────────────────────────────────────────────────────
+function RankBadge({ rank, style = {} }) {
+  if (!rank || rank > 500) return null;
+  const cls = rank <= 10 ? { bg: "rgba(167,139,250,.15)", color: "#a78bfa" }
+    : rank <= 30 ? { bg: "rgba(79,142,247,.15)", color: "#4f8ef7" }
+    : rank <= 80 ? { bg: "rgba(62,207,142,.15)", color: "#3ecf8e" }
+    : rank <= 150 ? { bg: "rgba(246,166,35,.15)", color: "#f6a623" }
+    : { bg: "rgba(136,145,164,.12)", color: "#8891a4" };
+  return (
+    <span style={{
+      fontSize: 11, fontWeight: 600, fontFamily: "'DM Mono', monospace",
+      padding: "2px 6px", borderRadius: 4, flexShrink: 0,
+      background: cls.bg, color: cls.color, ...style,
+    }}>#{rank}</span>
+  );
+}
+
+// ── Trend badge ───────────────────────────────────────────────────────────────
+function TrendBadge({ trend }) {
+  if (!trend || Math.abs(trend) < 5) return null;
+  return (
+    <span style={{
+      fontSize: 11, fontFamily: "'DM Mono', monospace", flexShrink: 0,
+      color: trend > 0 ? "#3ecf8e" : "#f25c54",
+    }}>
+      {trend > 0 ? `▲${trend}` : `▼${Math.abs(trend)}`}
+    </span>
+  );
+}
+
+// ── Card ──────────────────────────────────────────────────────────────────────
+function Card({ children, style = {}, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      background: "var(--bg2)", border: "1px solid var(--border)",
+      borderRadius: 14, padding: "13px", marginBottom: 10,
+      cursor: onClick ? "pointer" : undefined,
+      transition: onClick ? "border-color .15s" : undefined,
+      ...style,
+    }}
+    onMouseEnter={onClick ? (e) => e.currentTarget.style.borderColor = "var(--border2)" : undefined}
+    onMouseLeave={onClick ? (e) => e.currentTarget.style.borderColor = "var(--border)" : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── Card title ────────────────────────────────────────────────────────────────
+function CardTitle({ children, style = {} }) {
+  return (
+    <div style={{
+      fontSize: 11, fontWeight: 600, color: "var(--text3)",
+      textTransform: "uppercase", letterSpacing: "0.07em",
+      marginBottom: 11, ...style,
+    }}>{children}</div>
+  );
+}
+
+// ── Metric box ────────────────────────────────────────────────────────────────
+function Metric({ label, value, sub, valueStyle = {} }) {
+  return (
+    <div style={{
+      background: "var(--bg3)", borderRadius: 10, padding: "10px 12px",
+    }}>
+      <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.1, ...valueStyle }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: "var(--text2)", marginTop: 1 }}>{sub}</div>}
+    </div>
+  );
+}
+
+// ── Player row ────────────────────────────────────────────────────────────────
+function PlayerRow({ player, fcMap, showVal = true, showRank = false, showTrend = true, showPts, onClick, compact = false }) {
+  const fc = fcMap?.[player.player_id];
+  const age = player.age || (player.birth_date ? Math.floor((Date.now() - new Date(player.birth_date)) / 31557600000) : null);
+  const pos = player.position || player.fantasy_positions?.[0] || "";
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: compact ? "5px 0" : "7px 0",
+        borderBottom: "1px solid var(--border)",
+        cursor: onClick ? "pointer" : undefined,
+        transition: "background .1s",
+      }}
+      onMouseEnter={onClick ? e => e.currentTarget.style.background = "rgba(255,255,255,.02)" : undefined}
+      onMouseLeave={onClick ? e => e.currentTarget.style.background = "transparent" : undefined}
+    >
+      <PosBadge pos={pos} style={{ minWidth: 28 }} />
+      <span style={{
+        flex: 1, fontSize: 13, fontWeight: 500,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        color: "var(--text)",
+      }}>{player.full_name || player.player_id}</span>
+      {age && <span style={{ fontSize: 11, color: "var(--text3)", flexShrink: 0 }}>{age}y</span>}
+      {player.team && <span style={{ fontSize: 11, color: "var(--text2)", flexShrink: 0, minWidth: 26 }}>{player.team}</span>}
+      {showPts != null && showPts > 0 && (
+        <span style={{ fontSize: 11, color: "#2dd4bf", fontFamily: "'DM Mono', monospace", minWidth: 38, textAlign: "right", flexShrink: 0 }}>
+          {showPts.toFixed(0)}
+        </span>
+      )}
+      {showTrend && fc && <TrendBadge trend={fc.trend30} />}
+      {showRank && fc && <RankBadge rank={fc.rank} />}
+      {showVal && <ValBadge val={fc?.value} />}
+    </div>
+  );
+}
+
+// ── Segmented control ─────────────────────────────────────────────────────────
+function SegmentedControl({ options, value, onChange }) {
+  return (
+    <div style={{
+      display: "flex", background: "var(--bg3)", borderRadius: 10,
+      padding: 3, marginBottom: 14, gap: 2,
+    }}>
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          style={{
+            flex: 1, padding: "8px 0", borderRadius: 8,
+            border: "none", cursor: "pointer",
+            fontFamily: "inherit", fontSize: 13, fontWeight: 500,
+            transition: "all .15s",
+            background: value === opt.value ? "var(--accent)" : "transparent",
+            color: value === opt.value ? "#fff" : "var(--text2)",
+          }}
+        >{opt.label}</button>
+      ))}
+    </div>
+  );
+}
+
+// ── Filter pills ──────────────────────────────────────────────────────────────
+function FilterPills({ options, value, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+      {options.map(opt => (
+        <button
+          key={opt.value ?? opt}
+          onClick={() => onChange(opt.value ?? opt)}
+          style={{
+            padding: "4px 10px", borderRadius: 7, border: "1px solid",
+            cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 500,
+            transition: "all .15s",
+            borderColor: (opt.value ?? opt) === value ? "rgba(79,142,247,.4)" : "var(--border2)",
+            background: (opt.value ?? opt) === value ? "rgba(79,142,247,.14)" : "var(--bg3)",
+            color: (opt.value ?? opt) === value ? "var(--accent)" : "var(--text)",
+          }}
+        >{opt.label ?? opt}</button>
+      ))}
+    </div>
+  );
+}
+
+// ── Progress bar ──────────────────────────────────────────────────────────────
+function ProgressBar({ value, max, color = "var(--accent)", height = 4 }) {
+  const pct = Math.min(100, Math.round((value / max) * 100));
+  return (
+    <div style={{ flex: 1, height, background: "var(--bg3)", borderRadius: height / 2, overflow: "hidden" }}>
+      <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: height / 2, transition: "width .4s" }} />
+    </div>
+  );
+}
+
+// ── Spinner ───────────────────────────────────────────────────────────────────
+function Spinner({ size = 24 }) {
+  return (
+    <div style={{
+      width: size, height: size,
+      border: `${size > 20 ? 3 : 2}px solid var(--border)`,
+      borderTopColor: "var(--accent)",
+      borderRadius: "50%",
+      animation: "spin .7s linear infinite",
+      flexShrink: 0,
+    }} />
+  );
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+function SectionHeader({ children }) {
+  return (
+    <div style={{
+      fontSize: 11, fontWeight: 700, color: "var(--text3)",
+      textTransform: "uppercase", letterSpacing: "0.07em",
+      marginBottom: 8, marginTop: 4,
+    }}>{children}</div>
+  );
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+function Empty({ children }) {
+  return (
+    <div style={{ textAlign: "center", padding: "2rem 0", color: "var(--text3)", fontSize: 13 }}>
+      {children}
+    </div>
+  );
+}
+
+// ── Status dot ────────────────────────────────────────────────────────────────
+function StatusDot({ ok }) {
+  return (
+    <span style={{
+      display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+      background: ok ? "#3ecf8e" : "#f6a623",
+      animation: ok ? "none" : "pulse 1.2s ease-in-out infinite",
+      marginRight: 4, flexShrink: 0,
+    }} />
+  );
+}
+
+// ── Avatar ────────────────────────────────────────────────────────────────────
+function Avatar({ name, size = 36 }) {
+  const letter = (name || "?").charAt(0).toUpperCase();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 8,
+      background: "var(--accent)", color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.44, fontWeight: 700, flexShrink: 0,
+    }}>{letter}</div>
+  );
+}
+
+
+// ═══════════ DataContext ═══════════
+const DataContext = createContext(null);
+
+function DataProvider({ children }) {
+  const [league, setLeague]         = useState(null);
+  const [rosters, setRosters]       = useState([]);
+  const [users, setUsers]           = useState({});
+  const [players, setPlayers]       = useState({});
+  const [fcMap, setFcMap]           = useState({});
+  const [proj, setProj]             = useState({});
+  const [histStats, setHistStats]   = useState({});
+  const [transactions, setTxns]     = useState([]);
+  const [tradedPicks, setTradedPicks] = useState([]);
+  const [nflState, setNflState]     = useState(null);
+  const [myRosterId, setMyRosterId] = useState(null);
+  const [newsCache, setNewsCache]   = useState({});
+  const [lineupRanks, setLineupRanks] = useState([]);
+
+  // Status flags
+  const [leagueLoaded, setLeagueLoaded] = useState(false);
+  const [playersLoaded, setPlayersLoaded] = useState(false);
+  const [fcLoaded, setFcLoaded]     = useState(false);
+  const [statsLoaded, setStatsLoaded] = useState(false);
+  const [txnLoaded, setTxnLoaded]   = useState(false);
+  const [leagueError, setLeagueError] = useState(null);
+
+  const playerCount = Object.keys(players).length;
+  const histLoadedRef = useRef(false);
+
+  // ── Compute lineup ranks whenever fcMap or rosters change ──────────────────
+  useEffect(() => {
+    if (!fcLoaded || !rosters.length) return;
+    const ranked = rosters.map(r => {
+      const pl = (r.players || []).map(pid => ({ player_id: pid, ...players[pid] }));
+      return {
+        roster_id: r.roster_id,
+        name: ownerName(r, users),
+        lineupVal: optimalLineupValue(pl, fcMap),
+        totalVal: pl.reduce((s, p) => s + (fcMap[p.player_id]?.value || 0), 0),
+        wins: r.settings?.wins || 0,
+        losses: r.settings?.losses || 0,
+      };
+    }).sort((a, b) => b.lineupVal - a.lineupVal);
+    setLineupRanks(ranked);
+  }, [fcMap, rosters, players, fcLoaded, users]);
+
+  // ── LOAD LEAGUE (with cache) ────────────────────────────────────────────────
+  const loadLeague = useCallback(async () => {
+    // Try cache first for instant render
+    const cached = cacheGet(LEAGUE_CACHE_KEY, LEAGUE_CACHE_TTL);
+    if (cached) {
+      setLeague(cached.league);
+      setRosters(cached.rosters);
+      const uMap = {};
+      cached.users.forEach(u => { uMap[u.user_id] = u; });
+      setUsers(uMap);
+      setMyRosterId(cached.rosters[0]?.roster_id);
+      setLeagueLoaded(true);
+    }
+
+    // Always fetch fresh in background
+    try {
+      const [lg, rs, uArr] = await Promise.all([
+        safeFetch(`${SLP}/league/${LEAGUE_ID}`, 8000),
+        safeFetch(`${SLP}/league/${LEAGUE_ID}/rosters`, 8000),
+        safeFetch(`${SLP}/league/${LEAGUE_ID}/users`, 8000),
+      ]);
+      setLeague(lg);
+      setRosters(rs);
+      const uMap = {};
+      uArr.forEach(u => { uMap[u.user_id] = u; });
+      setUsers(uMap);
+      if (!cached) setMyRosterId(rs[0]?.roster_id);
+      cacheSet(LEAGUE_CACHE_KEY, { league: lg, rosters: rs, users: uArr });
+      setLeagueLoaded(true);
+      setLeagueError(null);
+    } catch (e) {
+      if (!cached) setLeagueError(e.message);
+    }
+  }, []);
+
+  // ── LOAD PLAYERS (localStorage cache) ──────────────────────────────────────
+  const loadPlayers = useCallback(async () => {
+    // Check cache first
+    const cached = cacheGet(PLAYERS_CACHE_KEY, PLAYERS_CACHE_TTL);
+    if (cached && Object.keys(cached).length > 100) {
+      setPlayers(cached);
+      setPlayersLoaded(true);
+      // Background refresh if older than 12h
+      const cacheEntry = (() => { try { return JSON.parse(localStorage.getItem(PLAYERS_CACHE_KEY)); } catch { return null; } })();
+      if (cacheEntry && Date.now() - cacheEntry.ts > 12 * 3600000) {
+        fetchAndCachePlayers(false);
+      }
+      return;
+    }
+    await fetchAndCachePlayers(true);
+  }, []);
+
+  const fetchAndCachePlayers = useCallback(async (setAfter) => {
+    try {
+      const data = await safeFetch(`${SLP}/players/nfl`, 30000);
+      // Slim down the payload before caching
       const slim = {};
-      Object.entries(data).forEach(([pid,p])=>{
-        if(!p.full_name) return;
+      Object.entries(data).forEach(([pid, p]) => {
+        if (!p.full_name) return;
         slim[pid] = {
-          player_id:pid,
-          full_name:p.full_name,
-          position:p.position,
-          fantasy_positions:p.fantasy_positions,
-          team:p.team,
-          age:p.age,
-          birth_date:p.birth_date,
-          years_exp:p.years_exp,
-          height:p.height,
-          weight:p.weight,
-          college:p.college,
-          espn_id:p.espn_id,
-          stats_id:p.stats_id,
+          player_id: pid, full_name: p.full_name, position: p.position,
+          fantasy_positions: p.fantasy_positions, team: p.team, age: p.age,
+          birth_date: p.birth_date, years_exp: p.years_exp, height: p.height,
+          weight: p.weight, college: p.college, espn_id: p.espn_id, stats_id: p.stats_id,
         };
       });
-      localStorage.setItem(PLAYERS_CACHE_KEY, JSON.stringify({ts:Date.now(), data:slim}));
-    }catch(storageErr){
-      // Storage full or unavailable — still works, just won't cache
-      console.warn("Players cache storage failed:", storageErr.message);
-    }
-
-    if(renderAfter) render();
-    loadHistStats();
-  }catch(e){
-    console.warn("Players fetch failed:", e.message);
-    // Fallback: fetch just rostered players individually
-    const pids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
-    for(let i=0;i<pids.length;i+=8){
-      await Promise.all(pids.slice(i,i+8).map(async pid=>{
-        try{
-          const r=await fetch(`${SLP}/players/nfl/${pid}`,{signal:AbortSignal.timeout(5000)});
-          if(r.ok){ const p=await r.json(); if(p?.full_name) S.players[pid]=p; }
-        }catch(_){}
-      }));
-      if(i===0) render();
-    }
-    render();
-    loadHistStats();
-  }
-}
-
-// Load career stats for all rostered players
-// Uses Sleeper's weekly grouping endpoint and aggregates by season
-// Returns all seasons in one call per player
-async function loadHistStats(){
-  const myR=rosterById(S.myRosterId)||S.rosters[0];
-  const myPids=myR?.players||[];
-  const allPids=[...new Set(S.rosters.flatMap(r=>r.players||[]))];
-  const rest=allPids.filter(p=>!myPids.includes(p));
-  const ordered=[...myPids,...rest];
-
-  for(let i=0;i<ordered.length;i+=6){
-    const chunk=ordered.slice(i,i+6);
-    await Promise.all(chunk.map(async pid=>{
-      if(S.histStats[pid]) return; // already loaded
-      try{
-        // Fetch each of the seasons we care about
-        const seasons=["2018","2019","2020","2021","2022","2023","2024","2025"];
-        const results=await Promise.all(seasons.map(season=>
-          fetch(`${SLP2}/stats/nfl/player/${pid}?season_type=regular&season=${season}&grouping=season`,{signal:AbortSignal.timeout(5000)})
-            .then(r=>r.ok?r.json():null).catch(()=>null)
-        ));
-        const career={};
-        seasons.forEach((season,idx)=>{
-          const d=results[idx];
-          if(d&&d.stats&&Object.keys(d.stats).length>0){
-            career[season]={...d.stats, gp: d.stats.gp||d.stats.games_played||0};
-          }
-        });
-        if(Object.keys(career).length>0) S.histStats[pid]=career;
-      }catch(_){}
-    }));
-    if(i===0) { S.statsLoaded=true; render(); }
-  }
-  S.statsLoaded=true;
-  render();
-}
-
-async function loadTxns(){
-  try{
-    const nfl=S.nflState||await jfetch(`${SLP}/state/nfl`);
-    const weeks=Math.min(nfl.leg||1,18);
-    const all=[];
-    for(let w=1;w<=weeks;w+=4){
-      const batch=[];
-      for(let b=w;b<Math.min(w+4,weeks+1);b++) batch.push(jfetch(`${SLP}/league/${LEAGUE_ID}/transactions/${b}`).catch(()=>[]));
-      const res=await Promise.all(batch);
-      res.forEach(arr=>{ if(Array.isArray(arr)) all.push(...arr); });
-    }
-    S.transactions=all.filter(t=>t.status==="complete").sort((a,b)=>(b.status_updated||0)-(a.status_updated||0));
-    S.txnLoaded=true; render();
-  }catch(e){ console.warn("Txns",e); }
-}
-
-// ESPN news
-async function fetchPlayerNews(pid){
-  if(S.newsCache[pid]!==undefined) return S.newsCache[pid];
-  S.newsCache[pid]=null;
-  const p=S.players[pid]||{};
-  const espnId=p.espn_id||p.stats_id;
-  if(!espnId){ S.newsCache[pid]=[]; return []; }
-  try{
-    const d=await fetch(`${ESPN_NEWS}?athlete=${espnId}&limit=5`).then(r=>r.ok?r.json():null);
-    const articles=(d?.articles||[]).slice(0,4).map(a=>({headline:a.headline||"",desc:a.description||"",date:a.published?new Date(a.published).toLocaleDateString("en-US",{month:"short",day:"numeric"}):""}));
-    S.newsCache[pid]=articles; return articles;
-  }catch(e){ S.newsCache[pid]=[]; return []; }
-}
-
-// ═══════════════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════════════
-function go(page){ S.page=page; document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.p===page)); render(); }
-function setMyTeam(val){ S.myRosterId=parseInt(val); render(); }
-function render(){ const el=document.getElementById("main"); if(!el) return; const pages={dash:renderDash,roster:renderRoster,league:renderLeague,trade:renderTrade,search:renderSearch}; el.innerHTML=(pages[S.page]||renderDash)(); }
-
-// ═══════════════════════════════════════════════════════════
-// DASH
-// ═══════════════════════════════════════════════════════════
-function renderDash(){
-  const myR=rosterById(S.myRosterId)||S.rosters[0];
-  const w=myR?.settings?.wins||0,l=myR?.settings?.losses||0;
-  const pf=((myR?.settings?.fpts||0)+(myR?.settings?.fpts_decimal||0)/100).toFixed(1);
-  const myPl=rPlayers(myR);
-  const lineupVal=S.fcLoaded?optimalLineupValue(myR):0;
-  const lrank=S.lineupRanks.findIndex(r=>r.roster_id===myR?.roster_id)+1;
-  const sorted=[...S.rosters].sort((a,b)=>(b.settings?.wins||0)-(a.settings?.wins||0));
-  const standRank=sorted.findIndex(r=>r.roster_id===myR?.roster_id)+1;
-  const topAssets=[...myPl].sort((a,b)=>fcVal(b.player_id)-fcVal(a.player_id)).slice(0,10);
-  const analysis=S.fcLoaded?buildTeamAnalysis(myR):null;
-  const fcStatus=S.fcLoaded?`<span class="dot ok"></span>FC values`:`<span class="dot pend"></span>Loading values…`;
-  const statStatus=S.statsLoaded?`<span class="dot ok"></span>Season stats`:`<span class="dot pend"></span>Loading stats…`;
-  const playerStatus=Object.keys(S.players).length>100?`<span class="dot ok"></span>${Object.keys(S.players).length.toLocaleString()} players`:`<span class="dot pend"></span>Loading players…`;
-
-  return `
-  <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-bottom:11px;flex-wrap:wrap;align-items:center">${fcStatus}&nbsp;&nbsp;${statStatus}&nbsp;&nbsp;${playerStatus}<button onclick="clearPlayersCache()" style="margin-left:auto;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer">↺ Refresh</button></div>
-  <div class="grid2">
-    <div class="metric"><div class="mlabel">Record</div><div class="mval">${w}–${l}</div></div>
-    <div class="metric"><div class="mlabel">Standing</div><div class="mval">#${standRank}<span style="font-size:13px;color:var(--text2)">/12</span></div></div>
-    <div class="metric"><div class="mlabel">Pts For</div><div class="mval" style="font-size:18px">${pf}</div></div>
-    <div class="metric"><div class="mlabel">Lineup Rank</div><div class="mval">${S.fcLoaded&&lrank>0?`#${lrank}<span style="font-size:13px;color:var(--text2)">/12</span>`:"—"}</div><div class="msub" style="font-size:10px">Optimal SF lineup</div></div>
-  </div>
-
-  ${analysis?`
-  <div class="analysis-box">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:5px">⚡ Team Analysis</div>
-    <div style="font-size:16px;font-weight:600;margin-bottom:8px;color:${analysis.modeColor}">${analysis.mode}</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:8px">${analysis.p1}</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:8px">${analysis.p2}</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:10px">${analysis.p3}</div>
-    ${analysis.strengths.length?`<div style="font-size:11px;color:var(--green);margin-bottom:3px;font-weight:600">✓ ${analysis.strengths.join(" · ")}</div>`:""}
-    ${analysis.concerns.length?`<div style="font-size:11px;color:var(--amber);font-weight:600">⚠ ${analysis.concerns.join(" · ")}</div>`:""}
-  </div>`:S.fcLoaded?"":
-  `<div class="card"><div class="ctitle">Team Analysis</div><div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)"><div class="spin spin-sm"></div>Loading FantasyCalc values…</div></div>`}
-
-  <div class="card">
-    <div class="ctitle">League Standings</div>
-    ${sorted.map((r,i)=>{ const isMe=r.roster_id===myR?.roster_id; const rw=r.settings?.wins||0,rl=r.settings?.losses||0; const pts=((r.settings?.fpts||0)+(r.settings?.fpts_decimal||0)/100).toFixed(1);
-    return `<div class="srow ${isMe?"me":""}"><span class="srank">#${i+1}</span><span class="sname">${esc(ownerName(r))}${isMe?`<span class="ytag">YOU</span>`:""}</span><span class="srec">${rw}–${rl}</span><span class="spts">${pts}</span></div>`;}).join("")}
-  </div>
-
-  <div class="card">
-    <div class="ctitle">Top Assets · FantasyCalc SF</div>
-    ${!S.fcLoaded?`<div style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px;padding:4px 0"><div class="spin spin-sm"></div>Loading…</div>`:
-    !myPl.length?`<div class="empty" style="padding:.5rem">Player data loading…</div>`:
-    topAssets.map(p=>prow(p,{showVal:true,showRank:true,showTrend:true,showProd:true})).join("")}
-  </div>`;
-}
-
-// ═══════════════════════════════════════════════════════════
-// ROSTER
-// ═══════════════════════════════════════════════════════════
-function renderRoster(){
-  const myR=rosterById(S.myRosterId)||S.rosters[0];
-  const all=rPlayers(myR);
-  const byPos={};
-  all.forEach(p=>{ const pos=(p.position||p.fantasy_positions?.[0]||"?").toUpperCase(); byPos[pos]=(byPos[pos]||0)+1; });
-  const pf=window._pf||"ALL",sm=window._sm||"value";
-  const filtered=pf==="ALL"?all:all.filter(p=>(p.position||p.fantasy_positions?.[0]||"").toUpperCase()===pf);
-  const sortedPl=[...filtered].sort((a,b)=>{
-    if(sm==="value") return fcVal(b.player_id)-fcVal(a.player_id);
-    if(sm==="rank") return (S.fcMap[a.player_id]?.rank||9999)-(S.fcMap[b.player_id]?.rank||9999);
-    if(sm==="pts24") return (seasonPPR(b.player_id,"2024")||0)-(seasonPPR(a.player_id,"2024")||0);
-    if(sm==="pts23") return (seasonPPR(b.player_id,"2023")||0)-(seasonPPR(a.player_id,"2023")||0);
-    return (parseInt(b.birth_date?.split("-")[0]||"1990"))-(parseInt(a.birth_date?.split("-")[0]||"1990"));
-  });
-  const myPicks=S.tradedPicks.filter(pk=>pk.owner_id===myR?.roster_id);
-  const gonePicks=S.tradedPicks.filter(pk=>pk.roster_id===myR?.roster_id&&pk.owner_id!==myR?.roster_id);
-  const targets={QB:2,RB:6,WR:8,TE:2};
-  return `
-  <div class="grid4">${["QB","RB","WR","TE"].map(p=>`<div class="metric" style="padding:8px 9px"><div class="mlabel">${p}</div><div class="mval" style="font-size:18px">${byPos[p]||0}</div></div>`).join("")}</div>
-  <div class="filters">
-    ${["ALL","QB","RB","WR","TE"].map(p=>`<button class="btn btn-sm ${pf===p?"on":""}" onclick="window._pf='${p}';render()">${p}</button>`).join("")}
-    <div style="margin-left:auto;display:flex;gap:4px">
-      ${[["value","Val"],["rank","Rank"],["pts24","'24"],["pts23","'23"],["age","Age"]].map(([k,l])=>`<button class="btn btn-sm ${sm===k?"on":""}" onclick="window._sm='${k}';render()">${l}</button>`).join("")}
-    </div>
-  </div>
-  <div class="card">
-    <div class="ctitle">${esc(ownerName(myR))} · ${all.length} players</div>
-    ${sortedPl.map(p=>prow(p,{showVal:true,showRank:sm==="rank",showProd:sm==="pts24"||sm==="pts23",prodYear:sm==="pts23"?"2023":"2024",showTrend:true,clickable:true})).join("")}
-    ${!sortedPl.length?`<div class="empty">No players</div>`:""}
-  </div>
-  ${myPicks.length?`<div class="card"><div class="ctitle">Picks You Own</div>${myPicks.sort((a,b)=>a.season-b.season||a.round-b.round).map(pk=>`<div class="prow"><span class="pkbadge">${pk.season} R${pk.round}</span><span class="pname" style="font-size:12px;color:var(--text2)">via ${esc(ownerName(rosterById(pk.roster_id)))}</span></div>`).join("")}</div>`:""}
-  ${gonePicks.length?`<div class="card"><div class="ctitle">Picks Traded Away</div>${gonePicks.sort((a,b)=>a.season-b.season||a.round-b.round).map(pk=>`<div class="prow"><span class="pkbadge" style="background:rgba(242,92,84,.1);color:var(--red)">${pk.season} R${pk.round}</span><span class="pname" style="font-size:12px;color:var(--text2)">to ${esc(ownerName(rosterById(pk.owner_id)))}</span></div>`).join("")}</div>`:""}
-  <div class="card"><div class="ctitle">Depth Needs</div>
-    ${Object.entries(targets).map(([pos,target])=>{ const have=byPos[pos]||0; const pct=Math.min(100,Math.round((have/target)*100)); const color=have>=target?"#3ecf8e":have>=(target*.7)?"#f6a623":"#f25c54";
-    return `<div class="prog-wrap"><span class="pos ${pos}" style="width:28px">${pos}</span><div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div><span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);min-width:28px;text-align:right">${have}/${target}</span></div>`;}).join("")}
-  </div>`;
-}
-
-// ═══════════════════════════════════════════════════════════
-// LEAGUE
-// ═══════════════════════════════════════════════════════════
-function renderLeague(){
-  const tab=window._ltab||"rankings";
-  return `<div class="filters" style="margin-bottom:11px">
-    <button class="btn ${tab==="rankings"?"on":""}" onclick="window._ltab='rankings';render()">Rankings</button>
-    <button class="btn ${tab==="rosters"?"on":""}" onclick="window._ltab='rosters';render()">Rosters</button>
-    <button class="btn ${tab==="trades"?"on":""}" onclick="window._ltab='trades';render()">Trades</button>
-    <button class="btn ${tab==="moves"?"on":""}" onclick="window._ltab='moves';render()">Moves</button>
-  </div>
-  ${tab==="rankings"?renderRankings():tab==="rosters"?renderAllRosters():tab==="trades"?renderTrades():renderMoves()}`;
-}
-
-function renderRankings(){
-  if(!S.fcLoaded) return `<div class="empty"><div class="spin" style="margin:0 auto 10px"></div>Loading values…</div>`;
-  const myR=rosterById(S.myRosterId)||S.rosters[0];
-  const maxLV=S.lineupRanks[0]?.lineupVal||1;
-  const allTV=S.rosters.map(r=>rPlayers(r).reduce((s,p)=>s+fcVal(p.player_id),0));
-  const maxTV=Math.max(...allTV)||1;
-  const tvSorted=[...S.rosters].map(r=>({r,tv:rPlayers(r).reduce((s,p)=>s+fcVal(p.player_id),0)})).sort((a,b)=>b.tv-a.tv);
-
-  return `
-  <div class="card">
-    <div class="ctitle">Optimal Lineup Power Rankings</div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Best 2QB+2RB+3WR+1TE+FLEX — FantasyCalc SF values</div>
-    ${S.lineupRanks.map((r,i)=>{ const isMe=r.roster_id===myR?.roster_id; const bar=Math.round((r.lineupVal/maxLV)*100);
-    return `<div class="rank-row ${isMe?"hl":""}">
-      <span style="font-size:11px;color:var(--text3);width:20px;font-family:'DM Mono',monospace">#${i+1}</span>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
-          <span style="font-size:13px;font-weight:${isMe?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.name)}${isMe?`<span class="ytag">YOU</span>`:""}</span>
-          <span style="font-size:11px;color:var(--text2);margin-left:auto;flex-shrink:0">${r.wins}–${r.losses}</span>
-        </div>
-        <div class="prog-bar" style="height:3px"><div class="prog-fill" style="width:${bar}%;background:${isMe?"var(--accent)":"var(--text3)"}"></div></div>
-      </div>
-      <span style="font-size:11px;font-family:'DM Mono',monospace;color:${isMe?"var(--accent)":"var(--text2)"};min-width:52px;text-align:right">${r.lineupVal.toLocaleString()}</span>
-    </div>`; }).join("")}
-  </div>
-  <div class="card">
-    <div class="ctitle">Total Roster Value Rankings</div>
-    ${tvSorted.map(({r,tv},i)=>{ const isMe=r.roster_id===myR?.roster_id; const bar=Math.round((tv/maxTV)*100);
-    return `<div class="rank-row ${isMe?"hl":""}">
-      <span style="font-size:11px;color:var(--text3);width:20px;font-family:'DM Mono',monospace">#${i+1}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:${isMe?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${esc(ownerName(r))}${isMe?`<span class="ytag">YOU</span>`:""}</div>
-        <div class="prog-bar" style="height:3px"><div class="prog-fill" style="width:${bar}%;background:${isMe?"var(--accent)":"var(--text3)"}"></div></div>
-      </div>
-      <span style="font-size:11px;font-family:'DM Mono',monospace;color:${isMe?"var(--accent)":"var(--text2)"};min-width:52px;text-align:right">${tv.toLocaleString()}</span>
-    </div>`; }).join("")}
-  </div>`;
-}
-
-function renderAllRosters(){
-  return [...S.rosters].sort((a,b)=>(b.settings?.wins||0)-(a.settings?.wins||0)).map(r=>{
-    const pl=rPlayers(r); const tv=pl.reduce((s,p)=>s+fcVal(p.player_id),0);
-    const grade=gradeOf(pl.length?tv/pl.length:0);
-    const isOpen=window._openR===r.roster_id;
-    return `<div class="card" style="padding:10px 12px">
-      <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window._openR=${isOpen?null:r.roster_id};render()">
-        <span style="flex:1;font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ownerName(r))}</span>
-        <span style="font-size:12px;color:var(--text2)">${r.settings?.wins||0}–${r.settings?.losses||0}</span>
-        ${tv>0?`<span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${tv.toLocaleString()}</span>`:""}
-        <span class="vb ${grade.c}">${grade.g}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2">${isOpen?`<path d="M18 15l-6-6-6 6"/>`:`<path d="M6 9l6 6 6-6"/>`}</svg>
-      </div>
-      ${isOpen?`<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)">${[...pl].sort((a,b)=>fcVal(b.player_id)-fcVal(a.player_id)).map(p=>prow(p,{showVal:true,showRank:true})).join("")}</div>`:""}
-    </div>`;
-  }).join("");
-}
-
-function renderTrades(){
-  if(!S.txnLoaded) return `<div class="empty"><div class="spin" style="margin:0 auto 10px"></div>Loading…</div>`;
-  const trades=S.transactions.filter(t=>t.type==="trade");
-  if(!trades.length) return `<div class="empty">No trades found</div>`;
-  return trades.slice(0,40).map(t=>{
-    const date=t.status_updated?new Date(t.status_updated).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
-    const sides={}; (t.roster_ids||[]).forEach(rid=>{ sides[rid]={adds:[],picks:[]}; });
-    if(t.adds) Object.entries(t.adds).forEach(([pid,rid])=>{ if(sides[rid]) sides[rid].adds.push(pid); });
-    (t.draft_picks||[]).forEach(pk=>{ if(sides[pk.owner_id]) sides[pk.owner_id].picks.push(`${pk.season} R${pk.round}`); });
-    return `<div class="txn">
-      <div class="txnhead"><span class="txntype txn-trade">Trade</span><span style="font-size:11px;color:var(--text2)">Wk ${t.leg||"?"}</span><span class="txndate">${date}</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        ${(t.roster_ids||[]).slice(0,2).map(rid=>{ const side=sides[rid]||{adds:[],picks:[]};
-          return `<div><div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px">${esc(ownerName(rosterById(rid)))} gets</div>
-          ${side.adds.map(pid=>`<div style="display:flex;align-items:center;gap:5px;padding:2px 0"><span class="pos ${posClass(S.players[pid]?.position||"")}" style="font-size:9px;padding:1px 4px;min-width:22px">${S.players[pid]?.position||"?"}</span><span style="font-size:12px">${esc(playerName(pid))}</span>${fcVal(pid)?`<span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto">${fcVal(pid).toLocaleString()}</span>`:""}</div>`).join("")}
-          ${side.picks.map(pk=>`<div style="padding:2px 0"><span class="pkbadge" style="font-size:10px">${pk}</span></div>`).join("")}
-          ${!side.adds.length&&!side.picks.length?`<span style="font-size:11px;color:var(--text3)">—</span>`:""}</div>`;}).join("")}
-      </div>
-    </div>`;
-  }).join("");
-}
-
-function renderMoves(){
-  if(!S.txnLoaded) return `<div class="empty"><div class="spin" style="margin:0 auto 10px"></div>Loading…</div>`;
-  const moves=S.transactions.filter(t=>t.type!=="trade").slice(0,50);
-  if(!moves.length) return `<div class="empty">No moves found</div>`;
-  return moves.map(t=>{
-    const date=t.status_updated?new Date(t.status_updated).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
-    const rid=(t.roster_ids||[])[0];
-    const adds=Object.keys(t.adds||{}),drops=Object.keys(t.drops||{});
-    return `<div class="txn">
-      <div class="txnhead"><span class="txntype ${t.type==="waiver"?"txn-waiver":"txn-add"}">${t.type==="waiver"?"Waiver":"FA"}</span><span style="font-size:11px;color:var(--text2)">${esc(ownerName(rosterById(rid)))}</span><span class="txndate">${date}</span></div>
-      ${adds.map(pid=>`<div style="display:flex;align-items:center;gap:5px;padding:2px 0"><span style="font-size:10px;color:var(--green);font-weight:700">+</span><span class="pos ${posClass(S.players[pid]?.position||"")}" style="font-size:9px;padding:1px 4px">${S.players[pid]?.position||"?"}</span><span style="font-size:12px">${esc(playerName(pid))}</span></div>`).join("")}
-      ${drops.map(pid=>`<div style="display:flex;align-items:center;gap:5px;padding:2px 0"><span style="font-size:10px;color:var(--red);font-weight:700">−</span><span class="pos ${posClass(S.players[pid]?.position||"")}" style="font-size:9px;padding:1px 4px">${S.players[pid]?.position||"?"}</span><span style="font-size:12px;color:var(--text2)">${esc(playerName(pid))}</span></div>`).join("")}
-    </div>`;
-  }).join("");
-}
-
-// ═══════════════════════════════════════════════════════════
-// TRADE
-// ═══════════════════════════════════════════════════════════
-function renderTrade(){
-  const myR=rosterById(S.myRosterId)||S.rosters[0];
-  const myPl=rPlayers(myR);
-  const theirR=S.tradeTarget?rosterById(S.tradeTarget):null;
-  const theirPl=theirR?rPlayers(theirR):[];
-  const qA=window._tqA||"",qB=window._tqB||"";
-  const filt=(pl,q)=>q?pl.filter(p=>(p.full_name||"").toLowerCase().includes(q.toLowerCase())):pl;
-  const vA=S.tradeA.reduce((s,pid)=>s+fcVal(pid),0);
-  const vB=S.tradeB.reduce((s,pid)=>s+fcVal(pid),0);
-  const diff=vA-vB;
-  return `
-  <div style="margin-bottom:10px">
-    <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Trading With</label>
-    <select class="sel" onchange="S.tradeTarget=parseInt(this.value)||null;S.tradeB=[];window._tqB='';render()">
-      <option value="">Select a team…</option>
-      ${S.rosters.filter(r=>r.roster_id!==S.myRosterId).map(r=>`<option value="${r.roster_id}" ${S.tradeTarget==r.roster_id?"selected":""}>${esc(ownerName(r))}</option>`).join("")}
-    </select>
-  </div>
-  <div class="tgrid">
-    ${[["You Send",myPl,S.tradeA,"A",qA,"_tqA"],["You Receive",theirPl,S.tradeB,"B",qB,"_tqB"]].map(([title,pl,sel,side,q,qk])=>`
-    <div class="tside"><h3>${title}</h3>
-      <input class="inp" style="font-size:12px;padding:6px 9px;margin-bottom:7px" placeholder="Search…" value="${esc(q)}" oninput="window.${qk}=this.value;render()"/>
-      <div class="tlist">
-        ${side==="B"&&!S.tradeTarget?`<p style="font-size:11px;color:var(--text3)">Select a team above</p>`:
-          filt(pl,q).map(p=>`<label class="tchk">
-            <input type="checkbox" ${sel.includes(p.player_id)?"checked":""} onchange="window._tgl('${side}','${p.player_id}')"/>
-            <span class="pos ${posClass(p.position||"")}" style="font-size:9px;min-width:22px">${p.position||"?"}</span>
-            <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.full_name||p.player_id)}</span>
-            ${fcVal(p.player_id)?`<span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${fcVal(p.player_id).toLocaleString()}</span>`:""}
-          </label>`).join("")}
-      </div>
-      <div class="ttotal">Total: ${(side==="A"?vA:vB).toLocaleString()}</div>
-    </div>`).join("")}
-  </div>
-  ${(S.tradeA.length||S.tradeB.length)?`
-  <div class="verdict">
-    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Trade Verdict · FantasyCalc SF</div>
-    <div style="font-size:17px;font-weight:600;margin-bottom:3px;color:${diff>500?"var(--green)":diff<-500?"var(--red)":"var(--amber)"}">
-      ${diff>500?"You win this trade ✓":diff<-500?"You give up value ✗":"Roughly even ≈"}
-    </div>
-    ${Math.abs(diff)>0?`<div style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;margin-bottom:10px">Δ ${Math.abs(diff).toLocaleString()} ${diff>0?"in your favor":"against you"}</div>`:""}
-    ${renderTradeBreakdown()}
-    <button class="btn btn-primary" style="font-size:12px;margin-top:10px" onclick="copyTrade()">Copy analysis prompt</button>
-  </div>`:`<div class="empty" style="padding:1.5rem 0">Select players on both sides to compare</div>`}`;
-}
-
-function renderTradeBreakdown(){
-  if(!S.tradeA.length&&!S.tradeB.length) return "";
-  const allPids=[...new Set([...S.tradeA,...S.tradeB])];
-  return `<div style="text-align:left;margin-top:8px">
-    ${[["You send",S.tradeA],["You receive",S.tradeB]].map(([label,pids])=>`
-    <div style="margin-bottom:8px">
-      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${label}</div>
-      ${pids.map(pid=>{ const p=S.players[pid]||{}; const fc=S.fcMap[pid]; const lp=latestPPR(pid); const ppr24=lp?.pts||null; const ppr24yr=lp?.season||"";
-        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
-          <span class="pos ${posClass(p.position||"")}" style="font-size:9px;min-width:22px">${p.position||"?"}</span>
-          <span style="flex:1;font-size:12px;font-weight:500">${esc(p.full_name||pid)}</span>
-          ${ppr24!==null?`<span style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace">'${ppr24yr}: ${ppr24.toFixed(0)}</span>`:""}
-          ${fc?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)">#${fc.rank}</span>`:""}
-          ${valBadge(fcVal(pid))}
-        </div>`; }).join("")}
-    </div>`).join("")}
-  </div>`;
-}
-
-window._tgl=(side,pid)=>{ if(side==="A") S.tradeA=S.tradeA.includes(pid)?S.tradeA.filter(p=>p!==pid):[...S.tradeA,pid]; else S.tradeB=S.tradeB.includes(pid)?S.tradeB.filter(p=>p!==pid):[...S.tradeB,pid]; render(); };
-
-function copyTrade(){
-  const fmt=pids=>pids.map(pid=>{ const fc=S.fcMap[pid]; const lp2=latestPPR(pid); const ppr24=lp2?.pts||null; return `${playerName(pid)} (FC:${fc?.value||0}, #${fc?.rank||"?"}, ${lp2?.season||"pts"}: ${ppr24!==null?ppr24.toFixed(0)+"pts":"no data"})`; }).join(", ");
-  const vA=S.tradeA.reduce((s,pid)=>s+fcVal(pid),0), vB=S.tradeB.reduce((s,pid)=>s+fcVal(pid),0);
-  const txt=`Dynasty trade (12-team SF PPR):\nI SEND [FC: ${vA.toLocaleString()}]: ${fmt(S.tradeA)||"nothing"}\nI RECEIVE [FC: ${vB.toLocaleString()}]: ${fmt(S.tradeB)||"nothing"}\nWho wins short vs long term? Should I do it, pass, or counter?`;
-  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>showToast("Copied!"));
-  else prompt("Copy:",txt);
-}
-
-// ═══════════════════════════════════════════════════════════
-// SEARCH / PLAYER DETAIL
-// ═══════════════════════════════════════════════════════════
-function renderSearch(){
-  const q=window._sq||"",pos=window._sp||"ALL",sel=window._ssel;
-  if(sel) return renderPlayerDetail(sel);
-  const results=q.length>1?Object.entries(S.players||{}).filter(([pid,p])=>{
-    if(!p.full_name) return false;
-    const mp=pos==="ALL"||(p.position||"").toUpperCase()===pos;
-    return mp&&p.full_name.toLowerCase().includes(q.toLowerCase());
-  }).slice(0,25):[];
-  return `
-  <input class="inp" placeholder="Search any NFL player…" value="${esc(q)}" oninput="window._sq=this.value;render()" style="margin-bottom:10px"/>
-  <div class="filters">${["ALL","QB","RB","WR","TE"].map(p=>`<button class="btn btn-sm ${pos===p?"on":""}" onclick="window._sp='${p}';render()">${p}</button>`).join("")}</div>
-  ${!Object.keys(S.players||{}).length?`<div class="empty">Player data loading…</div>`:""}
-  ${results.map(([pid,p])=>{ const fc=S.fcMap[pid]; const val=fc?.value||0; const lp3=latestPPR(pid); const ppr24=lp3?.pts||null;
-    return `<div class="card" style="padding:9px 12px;cursor:pointer;margin-bottom:6px" onclick="window._ssel='${pid}';render()">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="pos ${posClass(p.position||"")}" style="min-width:26px;text-align:center">${p.position||"?"}</span>
-        <span style="flex:1;font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.full_name)}</span>
-        <span style="font-size:11px;color:var(--text2)">${p.team||"FA"}</span>
-        ${ppr24!==null?`<span style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace">${ppr24.toFixed(0)}pts</span>`:""}
-        ${val?valBadge(val):""}
-      </div>
-    </div>`; }).join("")}
-  ${q.length>1&&!results.length?`<div class="empty">No players found</div>`:""}
-  ${!q?`<div class="empty">Type a player name to search</div>`:""}`;
-}
-
-function renderPlayerDetail(pid){
-  const p=S.players[pid]||{};
-  const fc=S.fcMap[pid];
-  const age=p.age||(p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null);
-  const ownerR=S.rosters.find(r=>(r.players||[]).includes(pid));
-  const news=S.newsCache[pid];
-  const scout=S.fcLoaded?buildScoutReport(pid):null;
-  const rawStats=S.histStats[pid];
-  if(news===undefined&&!window[`_nl_${pid}`]){ window[`_nl_${pid}`]=true; fetchPlayerNews(pid).then(()=>render()); }
-  const pos=(p.position||"").toUpperCase();
-  // Career seasons sorted newest first
-  const careerSeasons=rawStats?Object.keys(rawStats).sort((a,b)=>b-a):[];
-  // Key stats by position for the detail stat rows
-  const statKeys=pos==="QB"
-    ?[["pass_yd","Pass Yd"],["pass_td","Pass TD"],["pass_int","INT"],["rush_yd","Rush Yd"],["rush_td","Rush TD"]]
-    :pos==="RB"
-    ?[["rush_yd","Rush Yd"],["rush_td","Rush TD"],["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","Rec TD"]]
-    :pos==="TE"
-    ?[["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","TD"],["tgt","Tgts"]]
-    :[["rec","Rec"],["rec_yd","Rec Yd"],["rec_td","TD"],["rush_yd","Rush Yd"],["tgt","Tgts"]];
-
-  function careerTable(){
-    if(!careerSeasons.length) return "";
-    const rows=careerSeasons.map(yr=>{
-      const s=rawStats[yr];
-      const fpts=calcPPR(s).toFixed(1);
-      const gp=parseInt(s.gp||s.games_played||0);
-      const fptsColor=parseFloat(fpts)>300?"var(--green)":parseFloat(fpts)>200?"var(--teal)":parseFloat(fpts)>100?"var(--text)":"var(--text3)";
-      // Build stat string for this season
-      let statStr="";
-      if(pos==="QB"){
-        const pyds=parseInt(s.pass_yd||0),ptds=parseInt(s.pass_td||0),ints=parseInt(s.pass_int||0),ryds=parseInt(s.rush_yd||0);
-        if(pyds>0) statStr=`${pyds.toLocaleString()} Yds · ${ptds} TD · ${ints} INT${ryds>0?" · "+ryds+" Rush":""}`; 
-      } else if(pos==="RB"){
-        const ryds=parseInt(s.rush_yd||0),rtds=parseInt(s.rush_td||0),rec=parseInt(s.rec||0),recyds=parseInt(s.rec_yd||0);
-        if(ryds>0||rec>0) statStr=`${ryds} Rush Yd · ${rtds} TD · ${rec} Rec · ${recyds} Rec Yd`;
+      cacheSet(PLAYERS_CACHE_KEY, slim);
+      if (setAfter) {
+        setPlayers(slim);
+        setPlayersLoaded(true);
       } else {
-        const rec=parseInt(s.rec||0),recyds=parseInt(s.rec_yd||0),tds=parseInt(s.rec_td||0),tgts=parseInt(s.tgt||0);
-        if(rec>0) statStr=`${tgts>0?tgts+" Tgt · ":""}${rec} Rec · ${recyds} Yd · ${tds} TD`;
+        setPlayers(slim); // silent refresh
       }
-      return `<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
-        <span style="font-size:13px;font-weight:600;min-width:44px;color:var(--text2)">${yr}</span>
-        <span style="font-size:12px;color:var(--text3);min-width:26px">${gp>0?gp+"gm":""}</span>
-        <span style="flex:1;font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${statStr}</span>
-        <span style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:${fptsColor};min-width:52px;text-align:right">${parseFloat(fpts)>0?fpts+" pts":""}</span>
-      </div>`;
-    }).join("");
-    return `<div style="margin-bottom:6px">${rows}</div>`;
-  }
-  return `
-  <button class="btn btn-sm" onclick="window._ssel=null;render()" style="margin-bottom:11px">← Back</button>
-  <div class="card">
-    <div style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-        <span class="pos ${posClass(p.position||"")}" style="font-size:11px;padding:3px 7px">${p.position||"?"}</span>
-        <h2 style="font-size:19px;font-weight:600;letter-spacing:-.02em">${esc(p.full_name||pid)}</h2>
+    } catch (e) {
+      console.warn("Players fetch failed, trying individual fallback:", e.message);
+      // Fallback: fetch rostered players only
+      const pids = [...new Set(rosters.flatMap(r => r.players || []))];
+      const result = {};
+      for (let i = 0; i < pids.length; i += 8) {
+        await Promise.all(pids.slice(i, i + 8).map(async pid => {
+          try {
+            const p = await safeFetch(`${SLP}/players/nfl/${pid}`, 5000);
+            if (p?.full_name) result[pid] = p;
+          } catch {}
+        }));
+      }
+      setPlayers(result);
+      setPlayersLoaded(true);
+    }
+  }, [rosters]);
+
+  // ── LOAD FC VALUES ──────────────────────────────────────────────────────────
+  const loadFC = useCallback(async () => {
+    try {
+      const data = await safeFetch(FC_URL, 10000);
+      const map = {};
+      data.forEach(item => {
+        const pid = item.player?.sleeperId;
+        if (pid) map[pid] = {
+          value: item.value || 0, rank: item.overallRank || 9999,
+          posRank: item.positionRank || 9999, trend30: item.trend30Day || 0,
+        };
+      });
+      setFcMap(map);
+      setFcLoaded(true);
+    } catch (e) { console.warn("FC failed:", e.message); }
+  }, []);
+
+  // ── LOAD PROJECTIONS ────────────────────────────────────────────────────────
+  const loadProj = useCallback(async (nfl) => {
+    try {
+      const wk = Math.min(nfl?.week || 1, 18);
+      const positions = ["QB", "RB", "WR", "TE"];
+      const allProj = {};
+      await Promise.all(positions.map(async pos => {
+        try {
+          const url = `${SLP2}/projections/nfl/${CURRENT_SEASON}/${wk}?season_type=regular&position[]=${pos}`;
+          const data = await safeFetch(url, 10000);
+          if (Array.isArray(data)) {
+            data.forEach(item => {
+              if (item.player_id && item.stats) allProj[item.player_id] = item.stats;
+            });
+          } else if (typeof data === "object") {
+            Object.assign(allProj, data);
+          }
+        } catch {}
+      }));
+      setProj(allProj);
+    } catch (e) { console.warn("Proj failed:", e.message); }
+  }, []);
+
+  // ── LOAD CAREER STATS ───────────────────────────────────────────────────────
+  const loadHistStats = useCallback(async (rosterList, playerList) => {
+    if (histLoadedRef.current) return;
+    histLoadedRef.current = true;
+
+    const allPids = [...new Set(rosterList.flatMap(r => r.players || []))];
+    const myPids = rosterList[0]?.players || [];
+    const rest = allPids.filter(p => !myPids.includes(p));
+    const ordered = [...myPids, ...rest];
+    const seasons = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"];
+
+    const newStats = {};
+
+    for (let i = 0; i < ordered.length; i += 6) {
+      const chunk = ordered.slice(i, i + 6);
+      await Promise.all(chunk.map(async pid => {
+        try {
+          const results = await Promise.all(seasons.map(season =>
+            fetch(`${SLP2}/stats/nfl/player/${pid}?season_type=regular&season=${season}&grouping=season`)
+              .then(r => r.ok ? r.json() : null).catch(() => null)
+          ));
+          const career = {};
+          seasons.forEach((season, idx) => {
+            const d = results[idx];
+            if (d?.stats && Object.keys(d.stats).length > 0) career[season] = d.stats;
+          });
+          if (Object.keys(career).length > 0) newStats[pid] = career;
+        } catch {}
+      }));
+      if (i === 0) {
+        setHistStats({ ...newStats });
+        setStatsLoaded(true);
+      }
+    }
+    setHistStats({ ...newStats });
+    setStatsLoaded(true);
+  }, []);
+
+  // ── LOAD TRANSACTIONS ───────────────────────────────────────────────────────
+  const loadTxns = useCallback(async (nfl) => {
+    try {
+      const weeks = Math.min(nfl?.leg || 1, 18);
+      const all = [];
+      for (let w = 1; w <= weeks; w += 4) {
+        const batch = [];
+        for (let b = w; b < Math.min(w + 4, weeks + 1); b++) {
+          batch.push(safeFetch(`${SLP}/league/${LEAGUE_ID}/transactions/${b}`, 8000).catch(() => []));
+        }
+        const res = await Promise.all(batch);
+        res.forEach(arr => { if (Array.isArray(arr)) all.push(...arr); });
+      }
+      setTxns(all.filter(t => t.status === "complete").sort((a, b) => (b.status_updated || 0) - (a.status_updated || 0)));
+      setTxnLoaded(true);
+    } catch (e) { console.warn("Txns failed:", e.message); }
+  }, []);
+
+  // ── FETCH ESPN NEWS ─────────────────────────────────────────────────────────
+  const fetchNews = useCallback(async (pid) => {
+    if (newsCache[pid] !== undefined) return newsCache[pid];
+    const p = players[pid];
+    const espnId = p?.espn_id || p?.stats_id;
+    if (!espnId) {
+      setNewsCache(prev => ({ ...prev, [pid]: [] }));
+      return [];
+    }
+    try {
+      const d = await safeFetch(`${ESPN_NEWS}?athlete=${espnId}&limit=5`, 8000);
+      const articles = (d?.articles || []).slice(0, 4).map(a => ({
+        headline: a.headline || "", desc: a.description || "",
+        date: a.published ? new Date(a.published).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "",
+        url: a.links?.web?.href || "",
+      }));
+      setNewsCache(prev => ({ ...prev, [pid]: articles }));
+      return articles;
+    } catch {
+      setNewsCache(prev => ({ ...prev, [pid]: [] }));
+      return [];
+    }
+  }, [players, newsCache]);
+
+  const clearPlayersCache = useCallback(() => {
+    cacheClear(PLAYERS_CACHE_KEY);
+    setPlayers({});
+    setPlayersLoaded(false);
+    loadPlayers();
+  }, [loadPlayers]);
+
+  // ── BOOT SEQUENCE ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    loadLeague();
+    loadFC();
+    loadPlayers();
+
+    // NFL state → projections + transactions (low priority)
+    safeFetch(`${SLP}/state/nfl`, 10000).then(nfl => {
+      setNflState(nfl);
+      loadProj(nfl);
+      setTimeout(() => loadTxns(nfl), 2000);
+    }).catch(() => {
+      loadProj(null);
+    });
+
+    safeFetch(`${SLP}/league/${LEAGUE_ID}/traded_picks`, 8000)
+      .then(d => setTradedPicks(d)).catch(() => {});
+  }, []);
+
+  // ── Load hist stats once we have rosters + players ──────────────────────────
+  useEffect(() => {
+    if (leagueLoaded && playersLoaded && rosters.length && !histLoadedRef.current) {
+      setTimeout(() => loadHistStats(rosters, players), 1000);
+    }
+  }, [leagueLoaded, playersLoaded, rosters.length]);
+
+  const getRosterPlayers = useCallback((roster) => {
+    return (roster?.players || []).map(pid => ({ player_id: pid, ...players[pid] }));
+  }, [players]);
+
+  const getMyRoster = useCallback(() => {
+    return rosters.find(r => r.roster_id === myRosterId) || rosters[0];
+  }, [rosters, myRosterId]);
+
+  return (
+    <DataContext.Provider value={{
+      league, rosters, users, players, fcMap, proj, histStats,
+      transactions, tradedPicks, nflState, myRosterId, setMyRosterId,
+      newsCache, lineupRanks, leagueLoaded, playersLoaded, fcLoaded,
+      statsLoaded, txnLoaded, leagueError, playerCount, fetchNews,
+      getRosterPlayers, getMyRoster, clearPlayersCache,
+      ownerName: (r) => ownerName(r, users),
+    }}>
+      {children}
+    </DataContext.Provider>
+  );
+}
+
+const useData = () => useContext(DataContext);
+
+
+// ═══════════ Home ═══════════
+function Home() {
+  const {
+    league, rosters, users, players, fcMap, lineupRanks,
+    myRosterId, getRosterPlayers, getMyRoster, ownerName,
+    fcLoaded, playersLoaded, statsLoaded, playerCount, clearPlayersCache,
+  } = useData();
+
+  const myRoster = getMyRoster();
+  const myPlayers = useMemo(() => getRosterPlayers(myRoster), [myRoster, players]);
+
+  const w = myRoster?.settings?.wins || 0;
+  const l = myRoster?.settings?.losses || 0;
+  const pf = ((myRoster?.settings?.fpts || 0) + (myRoster?.settings?.fpts_decimal || 0) / 100).toFixed(1);
+
+  const standings = useMemo(() =>
+    [...rosters].sort((a, b) => (b.settings?.wins || 0) - (a.settings?.wins || 0) ||
+      ((b.settings?.fpts || 0) - (a.settings?.fpts || 0))),
+    [rosters]);
+
+  const standRank = standings.findIndex(r => r.roster_id === myRoster?.roster_id) + 1;
+  const lrankObj = lineupRanks.find(r => r.roster_id === myRoster?.roster_id);
+  const lrank = lineupRanks.findIndex(r => r.roster_id === myRoster?.roster_id) + 1;
+  const lineupVal = lrankObj?.lineupVal || 0;
+
+  const analysis = useMemo(() =>
+    buildTeamAnalysis(myPlayers, fcMap, lineupRanks, myRoster?.roster_id),
+    [myPlayers, fcMap, lineupRanks, myRoster?.roster_id]);
+
+  const topAssets = useMemo(() =>
+    [...myPlayers].sort((a, b) => (fcMap[b.player_id]?.value || 0) - (fcMap[a.player_id]?.value || 0)).slice(0, 12),
+    [myPlayers, fcMap]);
+
+  const navigate = useNavigate();
+
+  return (
+    <div className="fade-in">
+      {/* Status bar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, color: "var(--text3)", marginBottom: 11, flexWrap: "wrap" }}>
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <StatusDot ok={fcLoaded} /> {fcLoaded ? "FC values" : "Loading values…"}
+        </span>
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <StatusDot ok={playersLoaded} />
+          {playersLoaded ? `${playerCount.toLocaleString()} players` : "Loading players…"}
+        </span>
+        {statsLoaded && (
+          <span style={{ display: "flex", alignItems: "center" }}>
+            <StatusDot ok={true} /> Season stats
+          </span>
+        )}
+        <button
+          onClick={clearPlayersCache}
+          style={{
+            marginLeft: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 4,
+            border: "1px solid var(--border)", background: "transparent",
+            color: "var(--text3)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+          }}
+        >↺ Refresh</button>
       </div>
-      <div style="font-size:12px;color:var(--text2)">${p.team||"FA"} · Age ${age||"?"} · ${p.years_exp!=null?`${p.years_exp}yr exp`:"Rookie"}</div>
-      ${ownerR?`<div style="font-size:11px;color:var(--text3);margin-top:2px">Owned by ${esc(ownerName(ownerR))}</div>`:`<div style="font-size:11px;color:var(--green);margin-top:2px">✓ Free agent</div>`}
+
+      {/* Metrics */}
+      <div className="grid2">
+        <Metric label="Record" value={`${w}–${l}`} />
+        <Metric label="Standing" value={
+          <span>{standRank > 0 ? `#${standRank}` : "—"}<span style={{ fontSize: 13, color: "var(--text2)" }}>/12</span></span>
+        } />
+        <Metric label="Points For" value={pf} />
+        <Metric
+          label="Lineup Rank"
+          value={<span>{lrank > 0 && fcLoaded ? `#${lrank}` : "—"}<span style={{ fontSize: 13, color: "var(--text2)" }}>{lrank > 0 && fcLoaded ? "/12" : ""}</span></span>}
+          sub={lineupVal > 0 ? `${lineupVal.toLocaleString()} SF` : "Optimal SF lineup"}
+        />
+      </div>
+
+      {/* Team Analysis */}
+      {analysis ? (
+        <div style={{
+          background: "linear-gradient(135deg,rgba(62,207,142,.07),rgba(79,142,247,.05))",
+          border: "1px solid rgba(62,207,142,.18)", borderRadius: 14, padding: 14, marginBottom: 10,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--accent)", marginBottom: 5 }}>
+            ⚡ Team Analysis
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: analysis.modeColor }}>
+            {analysis.mode}
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65, marginBottom: 8 }}>{analysis.p1}</div>
+          <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65, marginBottom: 8 }}>{analysis.p2}</div>
+          <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65, marginBottom: 10 }}>{analysis.p3}</div>
+          {analysis.strengths.length > 0 && (
+            <div style={{ fontSize: 11, color: "#3ecf8e", marginBottom: 3, fontWeight: 600 }}>
+              ✓ {analysis.strengths.join(" · ")}
+            </div>
+          )}
+          {analysis.concerns.length > 0 && (
+            <div style={{ fontSize: 11, color: "var(--amber)", fontWeight: 600 }}>
+              ⚠ {analysis.concerns.join(" · ")}
+            </div>
+          )}
+        </div>
+      ) : !fcLoaded ? (
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 12 }}>
+            <Spinner size={16} /> Loading team analysis…
+          </div>
+        </Card>
+      ) : null}
+
+      {/* League Standings */}
+      <Card>
+        <CardTitle>League Standings</CardTitle>
+        {standings.map((r, i) => {
+          const isMe = r.roster_id === myRoster?.roster_id;
+          const rw = r.settings?.wins || 0, rl = r.settings?.losses || 0;
+          const pts = ((r.settings?.fpts || 0) + (r.settings?.fpts_decimal || 0) / 100).toFixed(1);
+          return (
+            <div key={r.roster_id} style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "7px 8px", borderRadius: 7, marginBottom: 2,
+              background: isMe ? "rgba(79,142,247,.08)" : "transparent",
+              border: isMe ? "1px solid rgba(79,142,247,.2)" : "1px solid transparent",
+            }}>
+              <span style={{ fontSize: 11, color: "var(--text3)", width: 20, fontFamily: "'DM Mono', monospace" }}>#{i + 1}</span>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: isMe ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {ownerName(r)}
+                {isMe && <span style={{ fontSize: 9, background: "rgba(79,142,247,.2)", color: "var(--accent-blue)", padding: "1px 5px", borderRadius: 4, marginLeft: 5, fontWeight: 700 }}>YOU</span>}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--text2)", fontFamily: "'DM Mono', monospace", minWidth: 36, textAlign: "right" }}>{rw}–{rl}</span>
+              <span style={{ fontSize: 11, color: "var(--text3)", minWidth: 44, textAlign: "right", fontFamily: "'DM Mono', monospace" }}>{pts}</span>
+            </div>
+          );
+        })}
+      </Card>
+
+      {/* Top Assets */}
+      <Card>
+        <CardTitle>Top Assets · FantasyCalc SF</CardTitle>
+        {!fcLoaded || !playersLoaded ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 12, padding: "4px 0" }}>
+            <Spinner size={16} /> {!fcLoaded ? "Loading values…" : "Loading players…"}
+          </div>
+        ) : topAssets.map(p => (
+          <PlayerRow
+            key={p.player_id}
+            player={p}
+            fcMap={fcMap}
+            showVal showRank showTrend
+            onClick={() => navigate(`/search/${p.player_id}`)}
+          />
+        ))}
+      </Card>
     </div>
-    <div class="grid2" style="margin-bottom:10px">
-      ${fc?`
-        <div class="metric"><div class="mlabel">FC Value (SF)</div><div class="mval" style="font-size:18px">${fc.value.toLocaleString()}</div></div>
-        <div class="metric"><div class="mlabel">Overall Rank</div><div class="mval" style="font-size:18px">#${fc.rank}</div><div class="msub">Pos: #${fc.posRank} &nbsp;${trendBadge(fc.trend30)}</div></div>
-      `:`<div class="metric" style="grid-column:span 2"><div class="mlabel">Dynasty Value</div><div class="mval" style="font-size:13px;color:var(--text3)">${S.fcLoaded?"Not ranked":"Loading…"}</div></div>`}
-      ${careerSeasons[0]&&rawStats?`<div class="metric"><div class="mlabel">${careerSeasons[0]} Pts</div><div class="mval" style="font-size:18px;color:var(--green)">${calcPPR(rawStats[careerSeasons[0]]).toFixed(0)}</div></div>`:""}
-      ${careerSeasons[1]&&rawStats?`<div class="metric"><div class="mlabel">${careerSeasons[1]} Pts</div><div class="mval" style="font-size:16px">${calcPPR(rawStats[careerSeasons[1]]).toFixed(0)}</div></div>`:""}
-      ${p.height?`<div class="metric"><div class="mlabel">Height</div><div class="mval" style="font-size:16px">${Math.floor(p.height/12)}'${p.height%12}"</div></div>`:""}
-    </div>
-     ${careerSeasons.length?`<div class="ctitle" style="margin-top:4px">Career Stats (PPR)</div>${careerTable()}`:"<div style='font-size:12px;color:var(--text3);padding:4px 0'>Loading career stats…</div>"}
-  </div>
-  ${scout?`
-  <div class="card">
-    <div class="ctitle">Dynasty Scouting Report</div>
-    <span class="verdict-tag ${scout.verdictClass}">${scout.verdict}</span>
-    <div class="scout-section"><div class="scout-title" style="color:var(--accent)">Production & Value</div><div class="scout-text">${scout.s1}</div></div>
-    <div class="scout-section"><div class="scout-title" style="color:var(--amber)">Age Curve</div><div class="scout-text">${scout.s2}</div></div>
-    <div class="scout-section"><div class="scout-title" style="color:var(--green)">Dynasty Verdict</div><div class="scout-text">${scout.s3}</div></div>
-  </div>`:`<div class="card"><div class="ctitle">Dynasty Scouting Report</div><div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)"><div class="spin spin-sm"></div>Loading…</div></div>`}
-  <div class="card">
-    <div class="ctitle">Latest News · ESPN</div>
-    ${news===undefined||news===null?`<div style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px;padding:4px 0"><div class="spin spin-sm"></div>Loading…</div>`:
-    news.length?news.map(a=>`<div class="news-item"><div class="news-headline">${esc(a.headline)}</div>${a.desc?`<div class="news-desc">${esc(a.desc.slice(0,160))}${a.desc.length>160?"…":""}</div>`:""}<div class="news-meta">${a.date}</div></div>`).join(""):
-    `<div style="font-size:12px;color:var(--text3);padding:4px 0">No recent ESPN news found</div>`}
-  </div>`;
+  );
 }
 
-function prow(p,opts={}){
-  const {showVal=false,showRank=false,showProd=false,prodYear="2024",showTrend=false,clickable=false}=opts;
-  const pos=p.position||p.fantasy_positions?.[0]||"";
-  const val=fcVal(p.player_id);
-  const fc=S.fcMap[p.player_id];
-  const age=p.age||(p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null);
-  const prodData=showProd?latestPPR(p.player_id):null; const prod=prodData?.pts||null; const prodYrLabel=prodData?.season||'24';
-  return `<div class="prow"${clickable?` style="cursor:pointer" onclick="window._ssel='${p.player_id}';go('search')"`:""}>
-    <span class="pos ${posClass(pos)}" style="min-width:26px;text-align:center">${pos||"?"}</span>
-    <span class="pname">${esc(p.full_name||p.player_id)}</span>
-    ${age?`<span class="pmeta">${age}y</span>`:""}
-    ${p.team?`<span class="pteam">${p.team}</span>`:""}
-    ${prod!==null?`<span style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;min-width:38px;text-align:right">${prod.toFixed(0)}</span>`:""}
-    ${showTrend&&fc?trendBadge(fc.trend30):""}
-    ${showRank&&fc?rankBadge(fc.rank):""}
-    ${showVal?valBadge(val):""}
-  </div>`;
+
+// ═══════════ Roster ═══════════
+const POS_TARGETS = { QB: 2, RB: 6, WR: 8, TE: 2 };
+const SORT_OPTS = [
+  { value: "value", label: "Val" },
+  { value: "rank",  label: "Rank" },
+  { value: "pts",   label: "Pts" },
+  { value: "age",   label: "Age" },
+];
+const POS_FILTERS = ["ALL", "QB", "RB", "WR", "TE"];
+
+function Roster() {
+  const { fcMap, histStats, tradedPicks, rosters, ownerName, getRosterPlayers, getMyRoster, myRosterId, playersLoaded } = useData();
+  const [posFilter, setPosFilter] = useState("ALL");
+  const [sortMode, setSortMode]   = useState("value");
+  const navigate = useNavigate();
+
+  const myRoster = getMyRoster();
+  const allPlayers = useMemo(() => getRosterPlayers(myRoster), [myRoster, getRosterPlayers]);
+
+  const getLatestPts = (pid) => {
+    const h = histStats[pid];
+    if (!h) return 0;
+    const seasons = Object.keys(h).sort((a, b) => b - a);
+    for (const s of seasons) { const v = calcPPR(h[s]); if (v > 0) return v; }
+    return 0;
+  };
+
+  const filtered = useMemo(() => {
+    let list = posFilter === "ALL" ? allPlayers : allPlayers.filter(p => (p.position || "").toUpperCase() === posFilter);
+    return [...list].sort((a, b) => {
+      if (sortMode === "value") return (fcMap[b.player_id]?.value || 0) - (fcMap[a.player_id]?.value || 0);
+      if (sortMode === "rank")  return (fcMap[a.player_id]?.rank || 9999) - (fcMap[b.player_id]?.rank || 9999);
+      if (sortMode === "pts")   return getLatestPts(b.player_id) - getLatestPts(a.player_id);
+      // age: youngest first
+      const ay = parseInt(a.birth_date?.split("-")[0] || "1990");
+      const by = parseInt(b.birth_date?.split("-")[0] || "1990");
+      return by - ay;
+    });
+  }, [allPlayers, posFilter, sortMode, fcMap, histStats]);
+
+  const byPos = useMemo(() => {
+    const m = {};
+    allPlayers.forEach(p => { const pos = (p.position || "?").toUpperCase(); m[pos] = (m[pos] || 0) + 1; });
+    return m;
+  }, [allPlayers]);
+
+  const myPicks = tradedPicks.filter(pk => pk.owner_id === myRoster?.roster_id);
+  const gonePicks = tradedPicks.filter(pk => pk.roster_id === myRoster?.roster_id && pk.owner_id !== myRoster?.roster_id);
+
+  const rosterById = (id) => rosters.find(r => r.roster_id === parseInt(id));
+
+  if (!playersLoaded) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "3rem 0", gap: 12 }}>
+        <Spinner size={28} />
+        <p style={{ color: "var(--text2)", fontSize: 13 }}>Loading player data…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fade-in">
+      {/* Position counts */}
+      <div className="grid4">
+        {["QB", "RB", "WR", "TE"].map(pos => (
+          <div key={pos} style={{ background: "var(--bg3)", borderRadius: 10, padding: "8px 10px" }}>
+            <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>{pos}</div>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.02em" }}>{byPos[pos] || 0}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters + sort */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+        {POS_FILTERS.map(p => (
+          <button key={p} onClick={() => setPosFilter(p)} style={{
+            padding: "4px 10px", borderRadius: 7, border: "1px solid",
+            cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 500,
+            borderColor: p === posFilter ? "rgba(62,207,142,.4)" : "var(--border2)",
+            background: p === posFilter ? "rgba(62,207,142,.14)" : "var(--bg3)",
+            color: p === posFilter ? "var(--accent)" : "var(--text)",
+          }}>{p}</button>
+        ))}
+        <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+          {SORT_OPTS.map(o => (
+            <button key={o.value} onClick={() => setSortMode(o.value)} style={{
+              padding: "4px 9px", borderRadius: 7, border: "1px solid",
+              cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 500,
+              borderColor: o.value === sortMode ? "rgba(79,142,247,.4)" : "var(--border2)",
+              background: o.value === sortMode ? "rgba(79,142,247,.14)" : "var(--bg3)",
+              color: o.value === sortMode ? "var(--accent-blue)" : "var(--text)",
+            }}>{o.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Roster */}
+      <Card>
+        <CardTitle>{ownerName(myRoster)} · {allPlayers.length} players</CardTitle>
+        {filtered.map(p => {
+          const pts = sortMode === "pts" ? getLatestPts(p.player_id) : undefined;
+          return (
+            <PlayerRow
+              key={p.player_id}
+              player={p}
+              fcMap={fcMap}
+              showVal={sortMode !== "rank"}
+              showRank={sortMode === "rank"}
+              showTrend={true}
+              showPts={pts > 0 ? pts : undefined}
+              onClick={() => navigate(`/search/${p.player_id}`)}
+            />
+          );
+        })}
+        {!filtered.length && <Empty>No players</Empty>}
+      </Card>
+
+      {/* Picks you own */}
+      {myPicks.length > 0 && (
+        <Card>
+          <CardTitle>Draft Picks You Own</CardTitle>
+          {myPicks.sort((a, b) => a.season - b.season || a.round - b.round).map((pk, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, fontFamily: "'DM Mono', monospace", padding: "2px 7px", borderRadius: 4, background: "rgba(167,139,250,.12)", color: "var(--purple)" }}>
+                {pk.season} R{pk.round}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--text2)" }}>via {ownerName(rosterById(pk.roster_id))}</span>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {/* Picks traded away */}
+      {gonePicks.length > 0 && (
+        <Card>
+          <CardTitle>Picks Traded Away</CardTitle>
+          {gonePicks.sort((a, b) => a.season - b.season || a.round - b.round).map((pk, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, fontFamily: "'DM Mono', monospace", padding: "2px 7px", borderRadius: 4, background: "rgba(242,92,84,.1)", color: "var(--red)" }}>
+                {pk.season} R{pk.round}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--text2)" }}>to {ownerName(rosterById(pk.owner_id))}</span>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {/* Depth needs */}
+      <Card>
+        <CardTitle>Depth Needs</CardTitle>
+        {Object.entries(POS_TARGETS).map(([pos, target]) => {
+          const have = byPos[pos] || 0;
+          const pct = Math.min(100, Math.round((have / target) * 100));
+          const color = have >= target ? "#3ecf8e" : have >= target * 0.7 ? "#f6a623" : "#f25c54";
+          return (
+            <div key={pos} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <PosBadge pos={pos} style={{ width: 30 }} />
+              <div style={{ flex: 1, height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2, transition: "width .4s" }} />
+              </div>
+              <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "var(--text2)", minWidth: 28, textAlign: "right" }}>
+                {have}/{target}
+              </span>
+            </div>
+          );
+        })}
+      </Card>
+    </div>
+  );
 }
 
-boot();
+
+// ═══════════ League ═══════════
+function League() {
+  const [tab, setTab] = useState("rankings");
+  return (
+    <div className="fade-in">
+      <SegmentedControl
+        options={[{ value: "rankings", label: "Rankings" }, { value: "rosters", label: "Rosters" }, { value: "trades", label: "Trades" }, { value: "moves", label: "Moves" }]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "rankings" && <LeagueRankings />}
+      {tab === "rosters"  && <AllRosters />}
+      {tab === "trades"   && <TradeHistory />}
+      {tab === "moves"    && <Moves />}
+    </div>
+  );
+}
+
+function LeagueRankings() {
+  const { rosters, users, players, fcMap, lineupRanks, myRosterId, ownerName, fcLoaded } = useData();
+
+  if (!fcLoaded) return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 13, padding: "1rem 0" }}>
+      <Spinner size={16} /> Loading values…
+    </div>
+  );
+
+  const maxLV = lineupRanks[0]?.lineupVal || 1;
+  const tvSorted = useMemo(() => {
+    return [...rosters].map(r => {
+      const pl = (r.players || []).map(pid => ({ player_id: pid, ...players[pid] }));
+      return { r, tv: pl.reduce((s, p) => s + (fcMap[p.player_id]?.value || 0), 0) };
+    }).sort((a, b) => b.tv - a.tv);
+  }, [rosters, players, fcMap]);
+  const maxTV = tvSorted[0]?.tv || 1;
+
+  const RankRow = ({ rank, name, isMe, record, value, maxVal, color }) => (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "6px 8px", borderRadius: 7, marginBottom: 2,
+      background: isMe ? "rgba(62,207,142,.06)" : "transparent",
+      border: isMe ? "1px solid rgba(62,207,142,.2)" : "1px solid transparent",
+    }}>
+      <span style={{ fontSize: 11, color: "var(--text3)", width: 22, fontFamily: "'DM Mono', monospace" }}>#{rank}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+          <span style={{ fontSize: 13, fontWeight: isMe ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {name}
+            {isMe && <span style={{ fontSize: 9, background: "rgba(62,207,142,.2)", color: "var(--accent)", padding: "1px 5px", borderRadius: 4, marginLeft: 5, fontWeight: 700 }}>YOU</span>}
+          </span>
+          <span style={{ fontSize: 11, color: "var(--text2)", marginLeft: "auto", flexShrink: 0 }}>{record}</span>
+        </div>
+        <ProgressBar value={value} max={maxVal} color={isMe ? "var(--accent)" : "var(--text3)"} height={3} />
+      </div>
+      <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: isMe ? "var(--accent)" : "var(--text2)", minWidth: 52, textAlign: "right" }}>
+        {value.toLocaleString()}
+      </span>
+    </div>
+  );
+
+  return (
+    <>
+      <Card>
+        <CardTitle>Optimal Lineup Power Rankings</CardTitle>
+        <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 10 }}>
+          Best 2QB+2RB+3WR+1TE+FLEX — FantasyCalc SF values
+        </div>
+        {lineupRanks.map((r, i) => (
+          <RankRow key={r.roster_id}
+            rank={i + 1} name={r.name}
+            isMe={r.roster_id === myRosterId}
+            record={`${r.wins}–${r.losses}`}
+            value={r.lineupVal} maxVal={maxLV}
+          />
+        ))}
+      </Card>
+      <Card>
+        <CardTitle>Total Roster Value Rankings</CardTitle>
+        {tvSorted.map(({ r, tv }, i) => (
+          <RankRow key={r.roster_id}
+            rank={i + 1} name={ownerName(r)}
+            isMe={r.roster_id === myRosterId}
+            record={`${r.settings?.wins || 0}–${r.settings?.losses || 0}`}
+            value={tv} maxVal={maxTV}
+          />
+        ))}
+      </Card>
+    </>
+  );
+}
+
+function AllRosters() {
+  const { rosters, players, fcMap, myRosterId, ownerName, getRosterPlayers, fcLoaded, playersLoaded } = useData();
+  const [openId, setOpenId] = useState(null);
+  const navigate = useNavigate();
+
+  const gradeOf = (avg) => {
+    if (avg > 8000) return { g: "A+", bg: "rgba(167,139,250,.15)", color: "#a78bfa" };
+    if (avg > 6000) return { g: "A",  bg: "rgba(79,142,247,.15)",  color: "#4f8ef7" };
+    if (avg > 3500) return { g: "B",  bg: "rgba(62,207,142,.15)",  color: "#3ecf8e" };
+    if (avg > 1500) return { g: "C",  bg: "rgba(246,166,35,.15)",  color: "#f6a623" };
+    return { g: "D", bg: "rgba(242,92,84,.15)", color: "#f25c54" };
+  };
+
+  const sorted = useMemo(() => [...rosters].sort((a, b) => (b.settings?.wins || 0) - (a.settings?.wins || 0)), [rosters]);
+
+  return (
+    <>
+      {sorted.map(r => {
+        const pl = getRosterPlayers(r);
+        const tv = pl.reduce((s, p) => s + (fcMap[p.player_id]?.value || 0), 0);
+        const grade = gradeOf(pl.length ? tv / pl.length : 0);
+        const isOpen = openId === r.roster_id;
+        const sortedPl = [...pl].sort((a, b) => (fcMap[b.player_id]?.value || 0) - (fcMap[a.player_id]?.value || 0));
+        return (
+          <Card key={r.roster_id} style={{ padding: "10px 12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+              onClick={() => setOpenId(isOpen ? null : r.roster_id)}>
+              <span style={{ flex: 1, fontWeight: 600, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {ownerName(r)}
+                {r.roster_id === myRosterId && <span style={{ fontSize: 9, background: "rgba(62,207,142,.2)", color: "var(--accent)", padding: "1px 5px", borderRadius: 4, marginLeft: 5, fontWeight: 700 }}>YOU</span>}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--text2)" }}>{r.settings?.wins || 0}–{r.settings?.losses || 0}</span>
+              {tv > 0 && <span style={{ fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{tv.toLocaleString()}</span>}
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: grade.bg, color: grade.color, fontFamily: "'DM Mono', monospace" }}>{grade.g}</span>
+              <span style={{ color: "var(--text3)", fontSize: 12 }}>{isOpen ? "▲" : "▼"}</span>
+            </div>
+            {isOpen && (
+              <div style={{ marginTop: 9, paddingTop: 9, borderTop: "1px solid var(--border)" }}>
+                {sortedPl.map(p => (
+                  <PlayerRow key={p.player_id} player={p} fcMap={fcMap} showVal showRank compact
+                    onClick={() => navigate(`/search/${p.player_id}`)} />
+                ))}
+              </div>
+            )}
+          </Card>
+        );
+      })}
+    </>
+  );
+}
+
+function TradeHistory() {
+  const { transactions, players, users, rosters, txnLoaded, ownerName } = useData();
+  const trades = useMemo(() => transactions.filter(t => t.type === "trade"), [transactions]);
+  const rosterById = (id) => rosters.find(r => r.roster_id === parseInt(id));
+  const playerName = pid => players[pid]?.full_name || pid;
+  const fcMap = useData().fcMap;
+
+  if (!txnLoaded) return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 13, padding: "1rem 0" }}>
+      <Spinner size={16} /> Loading trade history…
+    </div>
+  );
+  if (!trades.length) return <Empty>No trades found</Empty>;
+
+  return (
+    <>
+      {trades.slice(0, 40).map(t => {
+        const date = t.status_updated ? new Date(t.status_updated).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+        const sides = {};
+        (t.roster_ids || []).forEach(rid => { sides[rid] = { adds: [], picks: [] }; });
+        if (t.adds) Object.entries(t.adds).forEach(([pid, rid]) => { if (sides[rid]) sides[rid].adds.push(pid); });
+        (t.draft_picks || []).forEach(pk => { if (sides[pk.owner_id]) sides[pk.owner_id].picks.push(`${pk.season} R${pk.round}`); });
+        return (
+          <div key={t.transaction_id || t.status_updated} style={{ background: "var(--bg3)", borderRadius: 10, padding: 12, marginBottom: 8, border: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(79,142,247,.15)", color: "var(--accent-blue)", textTransform: "uppercase" }}>Trade</span>
+              <span style={{ fontSize: 11, color: "var(--text2)" }}>Wk {t.leg || "?"}</span>
+              <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: "auto" }}>{date}</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {(t.roster_ids || []).slice(0, 2).map(rid => {
+                const side = sides[rid] || { adds: [], picks: [] };
+                return (
+                  <div key={rid}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text3)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      {ownerName(rosterById(rid))} gets
+                    </div>
+                    {side.adds.map(pid => (
+                      <div key={pid} style={{ display: "flex", alignItems: "center", gap: 5, padding: "3px 0" }}>
+                        <PosBadge pos={players[pid]?.position || ""} size={9} style={{ padding: "1px 4px", minWidth: 22 }} />
+                        <span style={{ fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{playerName(pid)}</span>
+                        {fcMap[pid] && <span style={{ fontSize: 10, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{(fcMap[pid].value || 0).toLocaleString()}</span>}
+                      </div>
+                    ))}
+                    {side.picks.map(pk => (
+                      <div key={pk} style={{ padding: "3px 0" }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(167,139,250,.12)", color: "var(--purple)", fontFamily: "'DM Mono', monospace" }}>{pk}</span>
+                      </div>
+                    ))}
+                    {!side.adds.length && !side.picks.length && <span style={{ fontSize: 11, color: "var(--text3)" }}>—</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function Moves() {
+  const { transactions, players, rosters, txnLoaded, ownerName } = useData();
+  const moves = useMemo(() => transactions.filter(t => t.type !== "trade").slice(0, 50), [transactions]);
+  const rosterById = (id) => rosters.find(r => r.roster_id === parseInt(id));
+
+  if (!txnLoaded) return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 13, padding: "1rem 0" }}>
+      <Spinner size={16} /> Loading transactions…
+    </div>
+  );
+  if (!moves.length) return <Empty>No moves found</Empty>;
+
+  return (
+    <>
+      {moves.map(t => {
+        const date = t.status_updated ? new Date(t.status_updated).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+        const rid = (t.roster_ids || [])[0];
+        const adds = Object.keys(t.adds || {});
+        const drops = Object.keys(t.drops || {});
+        const isWaiver = t.type === "waiver";
+        return (
+          <div key={t.transaction_id || t.status_updated} style={{ background: "var(--bg3)", borderRadius: 8, padding: 10, marginBottom: 7, border: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase", background: isWaiver ? "rgba(167,139,250,.15)" : "rgba(62,207,142,.15)", color: isWaiver ? "var(--purple)" : "var(--accent)" }}>
+                {isWaiver ? "Waiver" : "FA"}
+              </span>
+              <span style={{ fontSize: 11, color: "var(--text2)" }}>{ownerName(rosterById(rid))}</span>
+              <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: "auto" }}>{date}</span>
+            </div>
+            {adds.map(pid => (
+              <div key={pid} style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 0" }}>
+                <span style={{ fontSize: 10, color: "var(--accent)", fontWeight: 700 }}>+</span>
+                <PosBadge pos={players[pid]?.position || ""} size={9} style={{ padding: "1px 4px", minWidth: 22 }} />
+                <span style={{ fontSize: 12 }}>{players[pid]?.full_name || pid}</span>
+              </div>
+            ))}
+            {drops.map(pid => (
+              <div key={pid} style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 0" }}>
+                <span style={{ fontSize: 10, color: "var(--red)", fontWeight: 700 }}>−</span>
+                <PosBadge pos={players[pid]?.position || ""} size={9} style={{ padding: "1px 4px", minWidth: 22 }} />
+                <span style={{ fontSize: 12, color: "var(--text2)" }}>{players[pid]?.full_name || pid}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+
+// ═══════════ Trade ═══════════
+function Trade() {
+  const [tab, setTab] = useState("suggestions");
+  return (
+    <div className="fade-in">
+      <SegmentedControl
+        options={[{ value: "suggestions", label: "Suggestions" }, { value: "builder", label: "Builder" }]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "suggestions" && <TradeSuggestions />}
+      {tab === "builder"     && <TradeBuilder />}
+    </div>
+  );
+}
+
+// ── SUGGESTIONS ───────────────────────────────────────────────────────────────
+function TradeSuggestions() {
+  const { rosters, players, fcMap, histStats, users, myRosterId, getRosterPlayers, getMyRoster, ownerName, fcLoaded, playersLoaded } = useData();
+  const [openId, setOpenId] = useState(null);
+
+  const myRoster = getMyRoster();
+  const myPlayers = useMemo(() => getRosterPlayers(myRoster), [myRoster, getRosterPlayers]);
+
+  const suggestions = useMemo(() => {
+    if (!fcLoaded || !playersLoaded || !myPlayers.length) return [];
+    return generateTradeSuggestions(myRoster, myPlayers, rosters, players, fcMap, histStats, users);
+  }, [fcLoaded, playersLoaded, myPlayers, rosters, players, fcMap, histStats, users]);
+
+  if (!fcLoaded || !playersLoaded) return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 13, padding: "1rem 0" }}>
+      <Spinner size={16} /> {!fcLoaded ? "Loading values…" : "Loading players…"}
+    </div>
+  );
+
+  return (
+    <>
+      <p style={{ fontSize: 12, color: "var(--text2)", marginBottom: 12 }}>
+        Ranked by mutual positional fit, mode compatibility, and projection delta.
+      </p>
+      {!suggestions.length && <Empty>No trade suggestions found</Empty>}
+      {suggestions.map(s => {
+        const isOpen = openId === s.id;
+        return (
+          <div key={s.id} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 10 }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{s.theirName}</div>
+                <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 1 }}>
+                  <span style={{ color: s.theirMode === "Rebuilding" ? "var(--amber)" : s.theirMode === "Win Now" ? "var(--purple)" : "var(--accent-blue)", fontWeight: 600 }}>
+                    {s.theirMode.toUpperCase()}
+                  </span>
+                  {" · "}FIT {s.fitScore}
+                </div>
+              </div>
+              <button
+                onClick={() => setOpenId(isOpen ? null : s.id)}
+                style={{
+                  padding: "6px 14px", borderRadius: 20, border: "none",
+                  background: "var(--accent)", color: "#0d0f12",
+                  fontFamily: "inherit", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                }}
+              >Open</button>
+            </div>
+
+            {/* Trade sides */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              {[["SEND", s.send], ["RECEIVE", s.receive]].map(([label, players]) => (
+                <div key={label}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text3)", marginBottom: 6, letterSpacing: "0.05em" }}>{label}</div>
+                  {players.map(p => (
+                    <div key={p.player_id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0" }}>
+                      <PosBadge pos={p.position || ""} size={9} style={{ padding: "1px 4px", minWidth: 22 }} />
+                      <span style={{ flex: 1, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.full_name || p.player_id}</span>
+                      <span style={{ fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{(p.value || 0).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Deltas */}
+            <div style={{ display: "flex", gap: 12, marginBottom: 8, fontSize: 11, fontFamily: "'DM Mono', monospace" }}>
+              <span style={{ color: s.fcDelta > 0 ? "#3ecf8e" : s.fcDelta < 0 ? "#f25c54" : "var(--text2)" }}>
+                △ {s.fcDelta > 0 ? "+" : ""}{s.fcDelta.toLocaleString()} FC
+              </span>
+              <span style={{ color: s.projDelta > 0 ? "#3ecf8e" : s.projDelta < 0 ? "#f25c54" : "var(--text2)" }}>
+                {new Date().getFullYear()} {s.projDelta > 0 ? "+" : ""}{s.projDelta}
+              </span>
+            </div>
+
+            {/* Explanation */}
+            <p style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.55 }}>{s.explanation}</p>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+// ── BUILDER ───────────────────────────────────────────────────────────────────
+function TradeBuilder() {
+  const { rosters, players, fcMap, myRosterId, getRosterPlayers, getMyRoster, ownerName, histStats } = useData();
+  const [targetId, setTargetId]  = useState("");
+  const [sendPids, setSendPids]  = useState([]);
+  const [recvPids, setRecvPids]  = useState([]);
+  const [qA, setQA] = useState("");
+  const [qB, setQB] = useState("");
+
+  const myRoster = getMyRoster();
+  const myPl = useMemo(() => getRosterPlayers(myRoster), [myRoster, getRosterPlayers]);
+  const theirRoster = rosters.find(r => r.roster_id === parseInt(targetId));
+  const theirPl = useMemo(() => theirRoster ? getRosterPlayers(theirRoster) : [], [theirRoster, getRosterPlayers]);
+
+  const toggle = (side, pid) => {
+    if (side === "A") setSendPids(p => p.includes(pid) ? p.filter(x => x !== pid) : [...p, pid]);
+    else setRecvPids(p => p.includes(pid) ? p.filter(x => x !== pid) : [...p, pid]);
+  };
+
+  const vA = sendPids.reduce((s, pid) => s + (fcMap[pid]?.value || 0), 0);
+  const vB = recvPids.reduce((s, pid) => s + (fcMap[pid]?.value || 0), 0);
+  const diff = vA - vB;
+
+  const getLatestPts = (pid) => {
+    const h = histStats[pid];
+    if (!h) return null;
+    const seasons = Object.keys(h).sort((a, b) => b - a);
+    for (const s of seasons) { const v = calcPPR(h[s]); if (v > 0) return { pts: v, season: s }; }
+    return null;
+  };
+
+  const filt = (pl, q) => q ? pl.filter(p => (p.full_name || "").toLowerCase().includes(q.toLowerCase())) : pl;
+
+  const copyPrompt = () => {
+    const fmt = (pids) => pids.map(pid => {
+      const fc = fcMap[pid]; const lp = getLatestPts(pid);
+      return `${players[pid]?.full_name || pid} (FC:${fc?.value || 0}, #${fc?.rank || "?"}, ${lp?.season || "pts"}:${lp ? lp.pts.toFixed(0) : "—"})`;
+    }).join(", ");
+    const txt = `Dynasty trade (12-team SF PPR):\nI SEND [FC: ${vA.toLocaleString()}]: ${fmt(sendPids) || "nothing"}\nI RECEIVE [FC: ${vB.toLocaleString()}]: ${fmt(recvPids) || "nothing"}\nWho wins short vs long term? Should I do it, pass, or counter?`;
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert("Copied! Paste into Claude.ai"));
+    else prompt("Copy:", txt);
+  };
+
+  return (
+    <>
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ fontSize: 10, color: "var(--text3)", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.06em" }}>Trading With</label>
+        <select value={targetId} onChange={e => { setTargetId(e.target.value); setRecvPids([]); }} className="team-select" style={{ maxWidth: "none", width: "100%" }}>
+          <option value="">Select a team…</option>
+          {rosters.filter(r => r.roster_id !== myRosterId).map(r => (
+            <option key={r.roster_id} value={r.roster_id}>{ownerName(r)}</option>
+          ))}
+        </select>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+        {[["You Send", myPl, sendPids, "A", qA, setQA], ["You Receive", theirPl, recvPids, "B", qB, setQB]].map(([title, pl, sel, side, q, setQ]) => (
+          <div key={side} style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 14, padding: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>{title}</div>
+            <input className="inp" style={{ fontSize: 12, padding: "6px 9px", marginBottom: 8 }} placeholder="Search…" value={q} onChange={e => setQ(e.target.value)} />
+            <div style={{ maxHeight: 200, overflowY: "auto" }}>
+              {side === "B" && !targetId ? (
+                <p style={{ fontSize: 11, color: "var(--text3)" }}>Select a team above</p>
+              ) : filt(pl, q).map(p => (
+                <label key={p.player_id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 0", borderBottom: "1px solid var(--border)", cursor: "pointer" }}>
+                  <input type="checkbox" checked={sel.includes(p.player_id)} onChange={() => toggle(side, p.player_id)}
+                    style={{ accentColor: "var(--accent)", width: 14, height: 14, flexShrink: 0 }} />
+                  <PosBadge pos={p.position || ""} size={9} style={{ padding: "1px 4px", minWidth: 22 }} />
+                  <span style={{ flex: 1, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.full_name || p.player_id}</span>
+                  {fcMap[p.player_id] && <span style={{ fontSize: 10, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{(fcMap[p.player_id].value || 0).toLocaleString()}</span>}
+                </label>
+              ))}
+            </div>
+            <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid var(--border)", fontSize: 11, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: "var(--text2)" }}>
+              Total: {(side === "A" ? vA : vB).toLocaleString()}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {(sendPids.length || recvPids.length) ? (
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>Trade Verdict · FantasyCalc SF</div>
+          <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 4, color: diff > 500 ? "#3ecf8e" : diff < -500 ? "#f25c54" : "#f6a623" }}>
+            {diff > 500 ? "You win this trade ✓" : diff < -500 ? "You give up value ✗" : "Roughly even ≈"}
+          </div>
+          {Math.abs(diff) > 0 && (
+            <div style={{ fontSize: 12, color: "var(--text2)", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+              Δ {Math.abs(diff).toLocaleString()} {diff > 0 ? "in your favor" : "against you"}
+            </div>
+          )}
+          {/* Breakdown */}
+          <div style={{ textAlign: "left", marginBottom: 12 }}>
+            {[["You send", sendPids], ["You receive", recvPids]].map(([label, pids]) => (
+              <div key={label} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</div>
+                {pids.map(pid => {
+                  const p = players[pid] || {}; const fc = fcMap[pid]; const lp = getLatestPts(pid);
+                  return (
+                    <div key={pid} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 0", borderBottom: "1px solid var(--border)" }}>
+                      <PosBadge pos={p.position || ""} size={9} style={{ padding: "1px 4px", minWidth: 22 }} />
+                      <span style={{ flex: 1, fontSize: 12, fontWeight: 500 }}>{p.full_name || pid}</span>
+                      {lp && <span style={{ fontSize: 10, color: "var(--text2)", fontFamily: "'DM Mono', monospace" }}>{lp.season}: {lp.pts.toFixed(0)}</span>}
+                      {fc && <span style={{ fontSize: 10, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>#{fc.rank}</span>}
+                      <ValBadge val={fc?.value} />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          <button onClick={copyPrompt} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "var(--accent-blue)", color: "#fff", fontFamily: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            Copy analysis prompt
+          </button>
+        </div>
+      ) : (
+        <Empty>Select players on both sides to compare</Empty>
+      )}
+    </>
+  );
+}
+
+
+// ═══════════ Search ═══════════
+function Search() {
+  const { pid } = useParams();
+  if (pid) return <PlayerDetail pid={pid} />;
+  return <PlayerSearch />;
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function PlayerSearch() {
+  const { players, fcMap, histStats } = useData();
+  const [q, setQ]   = useState("");
+  const [pos, setPos] = useState("ALL");
+  const navigate = useNavigate();
+
+  const getLatestPts = (pid) => {
+    const h = histStats[pid];
+    if (!h) return null;
+    const seasons = Object.keys(h).sort((a, b) => b - a);
+    for (const s of seasons) { const v = calcPPR(h[s]); if (v > 0) return v; }
+    return null;
+  };
+
+  const results = useMemo(() => {
+    if (q.length < 2) return [];
+    return Object.entries(players).filter(([pid, p]) => {
+      if (!p.full_name) return false;
+      const mp = pos === "ALL" || (p.position || "").toUpperCase() === pos;
+      return mp && p.full_name.toLowerCase().includes(q.toLowerCase());
+    }).slice(0, 30);
+  }, [players, q, pos]);
+
+  return (
+    <div className="fade-in">
+      <input
+        className="inp"
+        placeholder="Search any NFL player…"
+        value={q}
+        onChange={e => setQ(e.target.value)}
+        style={{ marginBottom: 10 }}
+        autoFocus
+      />
+      <FilterPills
+        options={["ALL", "QB", "RB", "WR", "TE"]}
+        value={pos}
+        onChange={setPos}
+      />
+      {!Object.keys(players).length && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 13, padding: "1rem 0" }}>
+          <Spinner size={16} /> Loading player database…
+        </div>
+      )}
+      {results.map(([pid, p]) => {
+        const fc = fcMap[pid];
+        const pts = getLatestPts(pid);
+        return (
+          <div key={pid} onClick={() => navigate(`/search/${pid}`)}
+            style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14, padding: "10px 13px", marginBottom: 7, cursor: "pointer", transition: "border-color .15s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border2)"}
+            onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <PosBadge pos={p.position || ""} style={{ minWidth: 28 }} />
+              <span style={{ flex: 1, fontWeight: 500, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.full_name}</span>
+              <span style={{ fontSize: 11, color: "var(--text2)" }}>{p.team || "FA"}</span>
+              {pts && <span style={{ fontSize: 11, color: "#2dd4bf", fontFamily: "'DM Mono', monospace" }}>{pts.toFixed(0)}</span>}
+              {fc && <ValBadge val={fc.value} />}
+            </div>
+          </div>
+        );
+      })}
+      {q.length >= 2 && !results.length && <Empty>No players found for "{q}"</Empty>}
+      {q.length < 2 && Object.keys(players).length > 0 && <Empty>Type a player name to search</Empty>}
+    </div>
+  );
+}
+
+// ── PLAYER DETAIL ─────────────────────────────────────────────────────────────
+function PlayerDetail({ pid }) {
+  const { players, fcMap, histStats, rosters, ownerName, newsCache, fetchNews, fcLoaded } = useData();
+  const navigate = useNavigate();
+  const p = players[pid] || {};
+  const fc = fcMap[pid];
+  const age = p.age || (p.birth_date ? Math.floor((Date.now() - new Date(p.birth_date)) / 31557600000) : null);
+  const ownerRoster = rosters.find(r => (r.players || []).includes(pid));
+  const news = newsCache[pid];
+  const scout = useMemo(() => fcLoaded ? buildScoutReport(pid, players, fcMap, histStats) : null, [pid, players, fcMap, histStats, fcLoaded]);
+  const careerH = histStats[pid] || {};
+  const sortedSeasons = Object.keys(careerH).sort((a, b) => b - a);
+  const pos = (p.position || "").toUpperCase();
+
+  useEffect(() => {
+    if (news === undefined) fetchNews(pid);
+  }, [pid, news]);
+
+  // Career stats row
+  const buildStatStr = (s) => {
+    if (!s) return "";
+    if (pos === "QB") {
+      const pyds = parseInt(s.pass_yd || 0), ptds = parseInt(s.pass_td || 0), ints = parseInt(s.pass_int || 0), ryds = parseInt(s.rush_yd || 0);
+      return pyds > 0 ? `${pyds.toLocaleString()} Yds · ${ptds} TD · ${ints} INT${ryds > 0 ? ` · ${ryds} Rush` : ""}` : "";
+    } else if (pos === "RB") {
+      const ryds = parseInt(s.rush_yd || 0), rtds = parseInt(s.rush_td || 0), rec = parseInt(s.rec || 0), recyds = parseInt(s.rec_yd || 0);
+      return (ryds > 0 || rec > 0) ? `${ryds} Rush · ${rtds} TD · ${rec} Rec · ${recyds} Rec Yd` : "";
+    } else {
+      const rec = parseInt(s.rec || 0), recyds = parseInt(s.rec_yd || 0), tds = parseInt(s.rec_td || 0), tgts = parseInt(s.tgt || 0);
+      return rec > 0 ? `${tgts > 0 ? tgts + " Tgt · " : ""}${rec} Rec · ${recyds} Yd · ${tds} TD` : "";
+    }
+  };
+
+  const mostRecentSeason = sortedSeasons[0];
+  const mostRecentPts = mostRecentSeason ? calcPPR(careerH[mostRecentSeason]) : null;
+  const prevSeason = sortedSeasons[1];
+  const prevPts = prevSeason ? calcPPR(careerH[prevSeason]) : null;
+
+  return (
+    <div className="fade-in">
+      <button onClick={() => navigate(-1)} style={{
+        display: "flex", alignItems: "center", gap: 6, padding: "6px 10px",
+        borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg3)",
+        color: "var(--text2)", fontFamily: "inherit", fontSize: 12, cursor: "pointer", marginBottom: 12,
+      }}>← Back</button>
+
+      {/* Player header card */}
+      <Card>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <PosBadge pos={p.position || ""} style={{ fontSize: 12, padding: "3px 7px" }} />
+            <h2 style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em" }}>{p.full_name || pid}</h2>
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text2)" }}>
+            {p.team || "FA"} · Age {age || "?"} · {p.years_exp != null ? `${p.years_exp}yr exp` : "Rookie"}
+          </div>
+          {ownerRoster
+            ? <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 3 }}>Owned by {ownerName(ownerRoster)}</div>
+            : <div style={{ fontSize: 11, color: "var(--accent)", marginTop: 3 }}>✓ Free agent</div>}
+        </div>
+
+        {/* Value metrics */}
+        <div className="grid2" style={{ marginBottom: sortedSeasons.length ? 14 : 0 }}>
+          {fc ? <>
+            <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>FC Value (SF)</div>
+              <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em" }}>{fc.value.toLocaleString()}</div>
+            </div>
+            <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Overall Rank</div>
+              <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em" }}>#{fc.rank}</div>
+              <div style={{ fontSize: 11, color: "var(--text2)", marginTop: 1, display: "flex", alignItems: "center", gap: 5 }}>
+                Pos: #{fc.posRank} <TrendBadge trend={fc.trend30} />
+              </div>
+            </div>
+          </> : <div style={{ gridColumn: "span 2", background: "var(--bg3)", borderRadius: 10, padding: "10px 12px" }}>
+            <div style={{ fontSize: 13, color: "var(--text3)" }}>{fcLoaded ? "Not ranked" : "Loading values…"}</div>
+          </div>}
+          {mostRecentPts > 0 && (
+            <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>{mostRecentSeason} Pts</div>
+              <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "#3ecf8e" }}>{mostRecentPts.toFixed(0)}</div>
+            </div>
+          )}
+          {prevPts > 0 && (
+            <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>{prevSeason} Pts</div>
+              <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.02em" }}>{prevPts.toFixed(0)}</div>
+            </div>
+          )}
+          {p.height && (
+            <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Height</div>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>{Math.floor(p.height / 12)}'{p.height % 12}"</div>
+            </div>
+          )}
+          {p.weight && (
+            <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Weight</div>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>{p.weight} lb</div>
+            </div>
+          )}
+        </div>
+
+        {/* Career stats table */}
+        {sortedSeasons.length > 0 && (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>
+              Career Stats (PPR)
+            </div>
+            {sortedSeasons.map(yr => {
+              const s = careerH[yr];
+              const fpts = calcPPR(s);
+              const gp = parseInt(s.gp || s.games_played || 0);
+              const statStr = buildStatStr(s);
+              const fptsColor = fpts > 300 ? "#3ecf8e" : fpts > 200 ? "#2dd4bf" : fpts > 100 ? "var(--text)" : "var(--text3)";
+              return (
+                <div key={yr} style={{ display: "flex", alignItems: "center", padding: "7px 0", borderBottom: "1px solid var(--border)" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, minWidth: 44, color: "var(--text2)" }}>{yr}</span>
+                  <span style={{ fontSize: 11, color: "var(--text3)", minWidth: 30 }}>{gp > 0 ? `${gp}gm` : ""}</span>
+                  <span style={{ flex: 1, fontSize: 11, color: "var(--text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{statStr}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: fptsColor, minWidth: 52, textAlign: "right" }}>
+                    {fpts > 0 ? `${fpts.toFixed(1)} pts` : ""}
+                  </span>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </Card>
+
+      {/* Scouting report */}
+      <Card>
+        <CardTitle>Dynasty Scouting Report</CardTitle>
+        {scout ? (
+          <>
+            <span style={{
+              display: "inline-block", fontSize: 12, fontWeight: 700,
+              padding: "4px 12px", borderRadius: 20, marginBottom: 10,
+              background: scout.verdictColor + "22", color: scout.verdictColor,
+            }}>{scout.verdict}</span>
+            {[["Production & Value", "var(--accent-blue)", scout.s1], ["Age Curve", "var(--amber)", scout.s2], ["Dynasty Verdict", "var(--accent)", scout.s3]].map(([title, color, text]) => (
+              <div key={title} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{title}</div>
+                <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65 }}>{text}</div>
+              </div>
+            ))}
+          </>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 12 }}>
+            <Spinner size={16} /> {fcLoaded ? "Analyzing…" : "Loading values…"}
+          </div>
+        )}
+      </Card>
+
+      {/* ESPN news */}
+      <Card>
+        <CardTitle>Latest News · ESPN</CardTitle>
+        {news === undefined || news === null ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 12, padding: "4px 0" }}>
+            <Spinner size={16} /> Loading news…
+          </div>
+        ) : news.length ? news.map((a, i) => (
+          <div key={i} style={{ padding: "9px 0", borderBottom: i < news.length - 1 ? "1px solid var(--border)" : "none" }}>
+            <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3, lineHeight: 1.4 }}>{a.headline}</div>
+            {a.desc && <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 3, lineHeight: 1.5 }}>{a.desc.slice(0, 160)}{a.desc.length > 160 ? "…" : ""}</div>}
+            <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 3 }}>{a.date}</div>
+          </div>
+        )) : (
+          <div style={{ fontSize: 12, color: "var(--text3)", padding: "4px 0" }}>No recent ESPN news found</div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+
+// ═══════════ App ═══════════
+const NAV = [
+  { path: "/",       label: "Home",   icon: HomeIcon },
+  { path: "/roster", label: "Roster", icon: RosterIcon },
+  { path: "/league", label: "League", icon: LeagueIcon },
+  { path: "/trade",  label: "Trade",  icon: TradeIcon },
+  { path: "/search", label: "Search", icon: SearchIcon },
+];
+
+function AppShell() {
+  const { league, rosters, users, myRosterId, setMyRosterId, ownerName, leagueError } = useData();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentPage = NAV.find(n => n.path !== "/" ? location.pathname.startsWith(n.path) : location.pathname === "/");
+  const myRoster = rosters.find(r => r.roster_id === myRosterId) || rosters[0];
+  const teamName = myRoster ? ownerName(myRoster) : "Dynasty HQ";
+
+  // Page titles
+  const pageTitles = {
+    "/": [league?.name || "Dynasty HQ", "12-team · Superflex · PPR"],
+    "/roster": [teamName, `${(myRoster?.players || []).length} players`],
+    "/league": ["League", "Power rankings & rosters"],
+    "/trade": ["Trade", "Suggestions & builder"],
+    "/search": ["Search", "Players & scouting"],
+  };
+  const activeBase = currentPage?.path || "/";
+  const [title, subtitle] = pageTitles[activeBase] || pageTitles["/"];
+
+  return (
+    <div className="app-shell">
+      {/* Top bar */}
+      <div className="topbar">
+        {/* Avatar */}
+        <div style={{
+          width: 36, height: 36, borderRadius: 8,
+          background: "var(--accent)", color: "#0d0f12",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 16, fontWeight: 700, flexShrink: 0,
+        }}>
+          {(teamName || "D").charAt(0).toUpperCase()}
+        </div>
+        <div className="topbar-title">
+          <h1>{title}</h1>
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+        {/* Team selector */}
+        <select
+          className="team-select"
+          value={myRosterId || ""}
+          onChange={e => setMyRosterId(parseInt(e.target.value))}
+        >
+          {rosters.map(r => (
+            <option key={r.roster_id} value={r.roster_id}>{ownerName(r)}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Error banner */}
+      {leagueError && (
+        <div style={{ background: "rgba(242,92,84,.15)", borderBottom: "1px solid rgba(242,92,84,.3)", padding: "8px 14px", fontSize: 12, color: "#f25c54", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>⚠ Could not load league: {leagueError}</span>
+          <button onClick={() => window.location.reload()} style={{ background: "none", border: "none", color: "#f25c54", cursor: "pointer", fontSize: 12, textDecoration: "underline" }}>Retry</button>
+        </div>
+      )}
+
+      {/* Main content */}
+      <div className="main-scroll">
+        <Routes>
+          <Route path="/"              element={<Home />} />
+          <Route path="/roster"        element={<Roster />} />
+          <Route path="/league"        element={<League />} />
+          <Route path="/trade"         element={<Trade />} />
+          <Route path="/search"        element={<Search />} />
+          <Route path="/search/:pid"   element={<Search />} />
+          <Route path="*"              element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+
+      {/* Bottom nav */}
+      <nav className="bottomnav">
+        {NAV.map(({ path, label, icon: Icon }) => {
+          const active = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+          return (
+            <button key={path} className={`nav-btn${active ? " active" : ""}`} onClick={() => navigate(path)}>
+              <Icon />
+              {label}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <HashRouter>
+      <DataProvider>
+        <AppShell />
+      </DataProvider>
+    </HashRouter>
+  );
+}
+
+// ── SVG Icons ─────────────────────────────────────────────────────────────────
+function HomeIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+  </svg>;
+}
+function RosterIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+    <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+  </svg>;
+}
+function LeagueIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+  </svg>;
+}
+function TradeIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+    <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+  </svg>;
+}
+function SearchIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+    <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+  </svg>;
+}
+
+
+// Mount
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(React.StrictMode, null, React.createElement(App)));
 </script>
 </body>
 </html>
