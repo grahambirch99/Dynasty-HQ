@@ -8,13 +8,11 @@
 <meta name="theme-color" content="#0E0F13"/>
 <title>Dynasty HQ</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<!-- React 18 -->
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<!-- React Router v6 -->
-<script crossorigin src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.production.min.js"></script>
-<!-- Babel for JSX -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Pinned CDN versions known to work together -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/react-router-dom@6.11.2/umd/react-router-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -171,15 +169,46 @@ select option { background: #1c2029; }
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;gap:14px;background:#0d0f12;color:#8891a4;font-family:system-ui,sans-serif">
+    <div style="width:28px;height:28px;border:3px solid rgba(255,255,255,.1);border-top-color:#3ecf8e;border-radius:50%;animation:spin .7s linear infinite"></div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    <p style="font-size:13px">Loading Dynasty HQ…</p>
+  </div>
+</div>
 <script type="text/babel" data-presets="react">
-// Destructure React hooks globally
+// ── Globals ────────────────────────────────────────────────────────────────
 const { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext } = React;
-// Destructure React Router
-const { HashRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate, Link } = ReactRouterDOM;
+const { HashRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate } = ReactRouterDOM;
+
+// ── Error Boundary ─────────────────────────────────────────────────────────
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding: '2rem', color: '#f25c54', fontFamily: 'monospace', fontSize: 13, background: '#0d0f12', minHeight: '100vh'}}>
+          <h2 style={{marginBottom: '1rem'}}>⚠ App Error</h2>
+          <pre style={{whiteSpace: 'pre-wrap', color: '#8891a4'}}>{this.state.error?.toString()}</pre>
+          <button onClick={() => window.location.reload()} style={{marginTop: '1rem', padding: '8px 16px', background: '#4f8ef7', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer'}}>
+            Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 
-// ═══════════ store ═══════════
+// ── App Code ───────────────────────────────────────────────────────────────
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const LEAGUE_ID = "1313311335559200768";
 const SLP  = "https://api.sleeper.app/v1";
@@ -567,8 +596,6 @@ function buildScoutReport(pid, players, fcMap, histStats) {
   return { verdict, verdictColor, s1, s2, s3, prodTrend, age, inPeak, prePeak };
 }
 
-
-// ═══════════ ui ═══════════
 // ── Position badge ────────────────────────────────────────────────────────────
 const POS_COLORS = {
   QB: { bg: "rgba(242,92,84,.15)", color: "#f25c54" },
@@ -837,8 +864,6 @@ function Avatar({ name, size = 36 }) {
   );
 }
 
-
-// ═══════════ DataContext ═══════════
 const DataContext = createContext(null);
 
 function DataProvider({ children }) {
@@ -1152,8 +1177,6 @@ function DataProvider({ children }) {
 
 const useData = () => useContext(DataContext);
 
-
-// ═══════════ Home ═══════════
 function Home() {
   const {
     league, rosters, users, players, fcMap, lineupRanks,
@@ -1309,8 +1332,6 @@ function Home() {
   );
 }
 
-
-// ═══════════ Roster ═══════════
 const POS_TARGETS = { QB: 2, RB: 6, WR: 8, TE: 2 };
 const SORT_OPTS = [
   { value: "value", label: "Val" },
@@ -1481,8 +1502,6 @@ function Roster() {
   );
 }
 
-
-// ═══════════ League ═══════════
 function League() {
   const [tab, setTab] = useState("rankings");
   return (
@@ -1735,8 +1754,6 @@ function Moves() {
   );
 }
 
-
-// ═══════════ Trade ═══════════
 function Trade() {
   const [tab, setTab] = useState("suggestions");
   return (
@@ -1959,8 +1976,6 @@ function TradeBuilder() {
   );
 }
 
-
-// ═══════════ Search ═══════════
 function Search() {
   const { pid } = useParams();
   if (pid) return <PlayerDetail pid={pid} />;
@@ -2212,8 +2227,6 @@ function PlayerDetail({ pid }) {
   );
 }
 
-
-// ═══════════ App ═══════════
 const NAV = [
   { path: "/",       label: "Home",   icon: HomeIcon },
   { path: "/roster", label: "Roster", icon: RosterIcon },
@@ -2346,10 +2359,26 @@ function SearchIcon() {
   </svg>;
 }
 
+// ── Mount ──────────────────────────────────────────────────────────────────
 
-// Mount
+// Global error handler
+window.onerror = function(msg, src, line, col, err) {
+  document.getElementById('root').innerHTML = 
+    '<div style="padding:2rem;color:#f25c54;font-family:monospace;font-size:12px;background:#0d0f12;min-height:100vh">' +
+    '<h2 style="margin-bottom:1rem">⚠ JavaScript Error</h2>' +
+    '<pre style="white-space:pre-wrap;color:#8891a4">' + msg + '\n\nLine: ' + line + '\nSource: ' + src + '</pre>' +
+    '<button onclick="location.reload()" style="margin-top:1rem;padding:8px 16px;background:#4f8ef7;color:#fff;border:none;border-radius:8px;cursor:pointer">Reload</button>' +
+    '</div>';
+};
+
+// Mount with error boundary
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(React.StrictMode, null, React.createElement(App)));
+root.render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
 </script>
 </body>
 </html>
